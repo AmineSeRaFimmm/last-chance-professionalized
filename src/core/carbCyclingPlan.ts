@@ -8,39 +8,12 @@ import {
 import { buildCarbCycleWarnings } from "./warnings";
 
 function getCarbCycleDayCounts(trainingDays: number) {
-  if (trainingDays <= 2) return { high: 1, medium: 1, low: 5 };
-  if (trainingDays === 3) return { high: 1, medium: 2, low: 4 };
-  if (trainingDays === 4) return { high: 2, medium: 2, low: 3 };
-  if (trainingDays === 5) return { high: 2, medium: 3, low: 2 };
-  return { high: 2, medium: 4, low: 1 };
+  if (trainingDays >= 4) return { high: 2, medium: 2, low: 3 };
+  return { high: 2, medium: 1, low: 4 };
 }
 
 function buildWeeklySchedule(trainingDays: number) {
-  if (trainingDays <= 2) {
-    return [
-      { day: "Mon", type: "High" as const, note: "Hardest strength session" },
-      { day: "Tue", type: "Low" as const, note: "Walk / recovery" },
-      { day: "Wed", type: "Medium" as const, note: "Strength session" },
-      { day: "Thu", type: "Low" as const, note: "Rest" },
-      { day: "Fri", type: "Low" as const, note: "Walk" },
-      { day: "Sat", type: "Low" as const, note: "Light cardio" },
-      { day: "Sun", type: "Low" as const, note: "Rest" }
-    ];
-  }
-
-  if (trainingDays === 3) {
-    return [
-      { day: "Mon", type: "High" as const, note: "Heavy legs / full body" },
-      { day: "Tue", type: "Low" as const, note: "Walk / recovery" },
-      { day: "Wed", type: "Medium" as const, note: "Upper body" },
-      { day: "Thu", type: "Low" as const, note: "Rest" },
-      { day: "Fri", type: "Medium" as const, note: "Strength session" },
-      { day: "Sat", type: "Low" as const, note: "Light cardio" },
-      { day: "Sun", type: "Low" as const, note: "Rest" }
-    ];
-  }
-
-  if (trainingDays === 4) {
+  if (trainingDays >= 4) {
     return [
       { day: "Mon", type: "High" as const, note: "Heavy legs" },
       { day: "Tue", type: "Medium" as const, note: "Upper body" },
@@ -52,25 +25,13 @@ function buildWeeklySchedule(trainingDays: number) {
     ];
   }
 
-  if (trainingDays === 5) {
-    return [
-      { day: "Mon", type: "High" as const, note: "Heavy legs" },
-      { day: "Tue", type: "Medium" as const, note: "Upper body" },
-      { day: "Wed", type: "Medium" as const, note: "Strength session" },
-      { day: "Thu", type: "High" as const, note: "Back / deadlift" },
-      { day: "Fri", type: "Medium" as const, note: "Upper body" },
-      { day: "Sat", type: "Low" as const, note: "Light cardio" },
-      { day: "Sun", type: "Low" as const, note: "Rest" }
-    ];
-  }
-
   return [
-    { day: "Mon", type: "High" as const, note: "Heavy legs" },
-    { day: "Tue", type: "Medium" as const, note: "Upper body" },
+    { day: "Mon", type: "High" as const, note: "Hardest strength session" },
+    { day: "Tue", type: "Low" as const, note: "Walk / recovery" },
     { day: "Wed", type: "Medium" as const, note: "Strength session" },
-    { day: "Thu", type: "High" as const, note: "Back / deadlift" },
-    { day: "Fri", type: "Medium" as const, note: "Upper body" },
-    { day: "Sat", type: "Medium" as const, note: "Accessory / cardio" },
+    { day: "Thu", type: "Low" as const, note: "Rest" },
+    { day: "Fri", type: "High" as const, note: "Second hard session" },
+    { day: "Sat", type: "Low" as const, note: "Light cardio" },
     { day: "Sun", type: "Low" as const, note: "Rest" }
   ];
 }
