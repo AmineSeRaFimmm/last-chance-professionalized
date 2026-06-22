@@ -21,6 +21,7 @@ export interface ProgressSummary {
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const TREND_WINDOW_SIZE = 7;
 
 export function normalizeWeightLog(entries: WeightLogEntry[]): WeightLogEntry[] {
   return entries
@@ -36,14 +37,13 @@ export function normalizeWeightLog(entries: WeightLogEntry[]): WeightLogEntry[] 
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export function getLatestAverageWeight(entries: WeightLogEntry[], count = 7): number | undefined {
+export function getLatestAverageWeight(entries: WeightLogEntry[], count = TREND_WINDOW_SIZE): number | undefined {
   const normalized = normalizeWeightLog(entries);
   const latest = normalized.slice(-count);
 
   if (latest.length === 0) return undefined;
 
-  const total = latest.reduce((sum, entry) => sum + entry.weightKg, 0);
-  return total / latest.length;
+  return getAverageWeight(latest);
 }
 
 export function calculateProgressSummary(
@@ -62,39 +62,77 @@ export function calculateProgressSummary(
     };
   }
 
-  const first = normalized[0];
-  const last = normalized[normalized.length - 1];
-  const days = Math.round((new Date(last.date).getTime() - new Date(first.date).getTime()) / MS_PER_DAY);
+  const trend = getTrendComparison(normalized);
 
-  if (days < 7) {
+  if (trend.days < 7) {
     return {
       entryCount: normalized.length,
       latestAverageKg,
-      earliestDate: first.date,
-      latestDate: last.date,
-      days,
-      weightChangeKg: last.weightKg - first.weightKg,
+      earliestDate: trend.earlyDate,
+      latestDate: trend.latestDate,
+      days: trend.days,
+      weightChangeKg: trend.weightChangeKg,
       status: "insufficient"
     };
   }
 
-  const weightChangeKg = last.weightKg - first.weightKg;
-  const actualLossPerWeekKg = (-weightChangeKg / days) * 7;
+  const actualLossPerWeekKg = (-trend.weightChangeKg / trend.days) * 7;
   const averageCalories = getAverageLoggedCalories(normalized) ?? plannedDailyCalories;
-  const actualTdee = averageCalories - (weightChangeKg * KCAL_PER_KG_FAT) / days;
+  const actualTdee = averageCalories - (trend.weightChangeKg * KCAL_PER_KG_FAT) / trend.days;
   const status = classifyProgress(actualLossPerWeekKg, expectedWeeklyLossKg);
 
   return {
     entryCount: normalized.length,
     latestAverageKg,
-    earliestDate: first.date,
-    latestDate: last.date,
-    days,
-    weightChangeKg,
+    earliestDate: trend.earlyDate,
+    latestDate: trend.latestDate,
+    days: trend.days,
+    weightChangeKg: trend.weightChangeKg,
     actualLossPerWeekKg,
     actualTdee,
     status
   };
+}
+
+function getTrendComparison(entries: WeightLogEntry[]) {
+  if (entries.length >= TREND_WINDOW_SIZE * 2) {
+    const earlyWindow = entries.slice(0, TREND_WINDOW_SIZE);
+    const latestWindow = entries.slice(-TREND_WINDOW_SIZE);
+    const earlyAverage = getAverageWeight(earlyWindow);
+    const latestAverage = getAverageWeight(latestWindow);
+    const earlyDate = getWindowMidDate(earlyWindow);
+    const latestDate = getWindowMidDate(latestWindow);
+    const days = Math.max(1, getDateDistanceDays(earlyDate, latestDate));
+
+    return {
+      earlyDate,
+      latestDate,
+      days,
+      weightChangeKg: latestAverage - earlyAverage
+    };
+  }
+
+  const first = entries[0];
+  const last = entries[entries.length - 1];
+
+  return {
+    earlyDate: first.date,
+    latestDate: last.date,
+    days: Math.max(0, getDateDistanceDays(first.date, last.date)),
+    weightChangeKg: last.weightKg - first.weightKg
+  };
+}
+
+function getAverageWeight(entries: WeightLogEntry[]): number {
+  return entries.reduce((sum, entry) => sum + entry.weightKg, 0) / entries.length;
+}
+
+function getWindowMidDate(entries: WeightLogEntry[]): string {
+  return entries[Math.floor(entries.length / 2)].date;
+}
+
+function getDateDistanceDays(startDate: string, endDate: string): number {
+  return Math.round((new Date(endDate).getTime() - new Date(startDate).getTime()) / MS_PER_DAY);
 }
 
 function getAverageLoggedCalories(entries: WeightLogEntry[]): number | undefined {
