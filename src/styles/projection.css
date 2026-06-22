@@ -1,0 +1,35 @@
+.projection-table {
+  grid-template-columns: 1fr;
+}
+
+.projection-table .projection-row:not(:last-child) {
+  display: none;
+}
+
+.projection-table .projection-row:last-child {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  min-height: 74px;
+  padding: 18px;
+}
+
+.projection-table .projection-row:last-child span {
+  font-size: 13px;
+}
+
+.projection-table .projection-row:last-child strong {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.projection-table + .small-note {
+  margin-bottom: 0;
+}
+
+@media (max-width: 420px) {
+  .projection-table .projection-row:last-child {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
