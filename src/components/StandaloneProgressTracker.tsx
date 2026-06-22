@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { buildCarbCyclingPlan } from "../core/carbCyclingPlan";
+import { buildSafeCarbCyclingPlan as buildCarbCyclingPlan } from "../core/carbCyclingSafePlan";
 import { DEFAULT_INPUTS } from "../core/constants";
 import { buildStandardPlan } from "../core/standardPlan";
 import type { PlanResult, UserInput } from "../core/types";
