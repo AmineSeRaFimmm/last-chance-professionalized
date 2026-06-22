@@ -1,13 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
-import { StandaloneProgressTracker } from "./components/StandaloneProgressTracker";
+import Root from "./Root";
 import "./styles/global.css";
 import "./styles/progress.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
-    <StandaloneProgressTracker />
+    <Root />
   </React.StrictMode>
 );
