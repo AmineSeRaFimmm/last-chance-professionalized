@@ -4,8 +4,7 @@ import {
   getMealFoodOptions,
   getMealFoodRole,
   optimizeMealFromFoodNames,
-  replaceFoodByRole,
-  type OptimizedMealResult
+  replaceFoodByRole
 } from "../core/mealOptimizer";
 
 type Language = "en" | "zh";
@@ -21,70 +20,48 @@ interface MealComposerOverlayProps {
   dayLabel: string;
   meal: DietMeal;
   baseMeal: DietMeal;
-  hasOverride: boolean;
   onApply: (foodNames: string[]) => void;
-  onReset: () => void;
   onClose: () => void;
 }
 
 const copy = {
   en: {
-    eyebrow: "Advanced composer",
     selected: "Meal ingredients",
     outside: "Ingredient field",
-    target: "Target",
-    preview: "Preview",
     apply: "Apply",
     cancel: "Cancel",
-    reset: "Reset",
-    balanced: "Balanced",
-    adjusted: "Adjusted grams",
-    needsProtein: "Needs protein source",
-    empty: "Add at least one ingredient",
-    hint: "Drag ingredients into the meal. Drag selected ingredients back outside to remove them.",
     protein: "Protein",
     carbs: "Carbs",
     fats: "Fats",
     plants: "Plants"
   },
   zh: {
-    eyebrow: "高级配餐器",
-    selected: "当餐食材区域",
+    selected: "Meal ingredients",
     outside: "食材选择区",
-    target: "目标",
-    preview: "预览",
-    apply: "应用",
-    cancel: "取消",
-    reset: "重置",
-    balanced: "已平衡",
-    adjusted: "已重算克数",
-    needsProtein: "需要蛋白质来源",
-    empty: "至少添加一个食材",
-    hint: "把外部食材拖入餐卡片；把已选食材拖到外面即可移除。",
-    protein: "蛋白质",
-    carbs: "碳水",
-    fats: "脂肪",
-    plants: "蔬果"
+    apply: "Apply",
+    cancel: "Cancel",
+    protein: "Protein",
+    carbs: "Carbs",
+    fats: "Fats",
+    plants: "Plants"
   }
 } as const;
 
 const orbit = [
-  { left: "5%", top: "10%", rotate: "-5deg" },
-  { left: "33%", top: "6%", rotate: "3deg" },
-  { left: "68%", top: "9%", rotate: "-2deg" },
-  { left: "9%", top: "27%", rotate: "4deg" },
-  { left: "77%", top: "28%", rotate: "-6deg" },
-  { left: "3%", top: "48%", rotate: "-3deg" },
-  { left: "80%", top: "50%", rotate: "5deg" },
-  { left: "13%", top: "71%", rotate: "2deg" },
-  { left: "62%", top: "75%", rotate: "-4deg" },
-  { left: "38%", top: "85%", rotate: "3deg" },
-  { left: "55%", top: "18%", rotate: "5deg" },
-  { left: "22%", top: "57%", rotate: "-6deg" },
-  { left: "71%", top: "66%", rotate: "2deg" },
-  { left: "18%", top: "16%", rotate: "-2deg" },
-  { left: "49%", top: "67%", rotate: "-1deg" },
-  { left: "84%", top: "14%", rotate: "4deg" }
+  { left: "4%", top: "7%", rotate: "-5deg" },
+  { left: "37%", top: "4%", rotate: "3deg" },
+  { left: "70%", top: "8%", rotate: "-2deg" },
+  { left: "6%", top: "23%", rotate: "4deg" },
+  { left: "76%", top: "25%", rotate: "-6deg" },
+  { left: "2%", top: "44%", rotate: "-3deg" },
+  { left: "80%", top: "44%", rotate: "5deg" },
+  { left: "8%", top: "68%", rotate: "2deg" },
+  { left: "68%", top: "70%", rotate: "-4deg" },
+  { left: "39%", top: "84%", rotate: "3deg" },
+  { left: "55%", top: "20%", rotate: "5deg" },
+  { left: "20%", top: "55%", rotate: "-6deg" },
+  { left: "72%", top: "59%", rotate: "2deg" },
+  { left: "20%", top: "15%", rotate: "-2deg" }
 ];
 
 export function MealComposerOverlay({
@@ -92,9 +69,7 @@ export function MealComposerOverlay({
   dayLabel,
   meal,
   baseMeal,
-  hasOverride,
   onApply,
-  onReset,
   onClose
 }: MealComposerOverlayProps) {
   const t = copy[language];
@@ -134,7 +109,7 @@ export function MealComposerOverlay({
   }
 
   return (
-    <div className="meal-composer-overlay" role="dialog" aria-modal="true" aria-label={`${meal.name} composer`} onDragOver={(event) => event.preventDefault()} onDrop={handleOutsideDrop}>
+    <div className="meal-composer-overlay" role="dialog" aria-modal="true" aria-label={`${dayLabel} ${meal.name} composer`} onDragOver={(event) => event.preventDefault()} onDrop={handleOutsideDrop}>
       <button className="meal-composer-backdrop" type="button" aria-label={t.cancel} onClick={onClose} />
 
       <div className="ingredient-orbit" aria-label={t.outside}>
@@ -150,34 +125,14 @@ export function MealComposerOverlay({
           >
             <span>{categoryLabel(food.category, t)}</span>
             <strong>{food.name}</strong>
-            <em>{food.kcal} kcal · P{food.protein} C{food.carbs} F{food.fat}</em>
           </button>
         ))}
       </div>
 
       <section className="meal-composer-card" onDragOver={(event) => event.preventDefault()} onDrop={handleSelectedDrop}>
-        <div className="meal-composer-topline">
-          <span>{t.eyebrow}</span>
-          <strong>{dayLabel}</strong>
-        </div>
-
-        <div className="meal-composer-title-row">
-          <div>
-            <h2>{meal.name}</h2>
-            <p>{t.hint}</p>
-          </div>
-          <div className={`meal-composer-status ${preview.status}`}>{statusText(preview, t)}</div>
-        </div>
-
-        <div className="meal-composer-targets">
-          <MacroBadge label={t.target} meal={baseMeal} />
-          <MacroBadge label={t.preview} meal={preview.meal} />
-        </div>
-
         <div className="meal-selected-zone">
           <div className="meal-selected-head">
             <span>{t.selected}</span>
-            <strong>{preview.meal.calories} kcal</strong>
           </div>
           <div className="meal-selected-list">
             {selectedFoods.map((food) => (
@@ -198,20 +153,9 @@ export function MealComposerOverlay({
 
         <div className="meal-composer-actions">
           <button className="secondary-button" type="button" onClick={onClose}>{t.cancel}</button>
-          <button className="secondary-button" disabled={!hasOverride && selectedFoodNames.join("|") === baseMeal.items.map((item) => item.name).join("|")} type="button" onClick={onReset}>{t.reset}</button>
           <button className="primary-button no-top-margin" disabled={applyDisabled} type="button" onClick={() => onApply(selectedFoodNames)}>{t.apply}</button>
         </div>
       </section>
-    </div>
-  );
-}
-
-function MacroBadge({ label, meal }: { label: string; meal: Pick<DietMeal, "calories" | "proteinG" | "carbsG" | "fatG"> }) {
-  return (
-    <div className="meal-macro-badge">
-      <span>{label}</span>
-      <strong>{meal.calories} kcal</strong>
-      <em>P{meal.proteinG} · C{meal.carbsG} · F{meal.fatG}</em>
     </div>
   );
 }
@@ -223,13 +167,6 @@ function prioritizeFoods(foods: FoodWithCategory[], meal: DietMeal): FoodWithCat
     const secondPreferred = currentRoles.has(getMealFoodRole(second)) ? 0 : 1;
     return firstPreferred - secondPreferred || first.name.localeCompare(second.name);
   });
-}
-
-function statusText(preview: OptimizedMealResult, labels: typeof copy.en | typeof copy.zh): string {
-  if (preview.status === "balanced") return labels.balanced;
-  if (preview.status === "needs-protein") return labels.needsProtein;
-  if (preview.status === "empty") return labels.empty;
-  return labels.adjusted;
 }
 
 function categoryLabel(category: FoodCategory, labels: typeof copy.en | typeof copy.zh): string {
