@@ -31,6 +31,7 @@ const copy = {
     done: "Done",
     principles: "Principles",
     intent: "Intent",
+    intensity: "Intensity",
     conditioning: "Conditioning",
     recovery: "Recovery",
     bestFor: "Best for",
@@ -55,6 +56,7 @@ const copy = {
     done: "完成",
     principles: "执行原则",
     intent: "目标",
+    intensity: "强度",
     conditioning: "体能",
     recovery: "恢复",
     bestFor: "适合",
@@ -221,8 +223,9 @@ function buildResult(input: UserInput): PlanResult {
 }
 
 function loadProgramId(): WorkoutProgramId {
-  const stored = window.localStorage.getItem(PROGRAM_KEY) as WorkoutProgramId | null;
-  return WORKOUT_PROGRAM_OPTIONS.some((option) => option.id === stored) ? stored : "auto";
+  const stored = window.localStorage.getItem(PROGRAM_KEY);
+  if (!stored) return "auto";
+  return WORKOUT_PROGRAM_OPTIONS.some((option) => option.id === stored) ? (stored as WorkoutProgramId) : "auto";
 }
 
 function groupPrograms(): [WorkoutProgramCategory, WorkoutProgramOption[]][] {
