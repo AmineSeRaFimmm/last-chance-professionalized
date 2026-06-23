@@ -102,7 +102,7 @@ function calculateDayCalories({
     const highCalories = highFloor;
     const mediumCalories = mediumFloor;
     const lowCalories = Math.max(
-      proteinG * 4 + getMinimumFatG(referenceWeight) * 9,
+      proteinG * 4,
       (weeklyCalories - dayCounts.high * highCalories - dayCounts.medium * mediumCalories) /
         dayCounts.low
     );
@@ -149,14 +149,13 @@ function buildFeasibleMacroResult(
   proteinG: number,
   referenceWeight: number
 ): MacroResult {
-  const targetFatG = FAT_TARGET_G_PER_KG[type] * referenceWeight;
-  const minimumFatG = getMinimumFatG(referenceWeight);
-  const maximumFatG = Math.max(0, (calories - proteinG * 4) / 9);
-  const fatG = Math.max(0, Math.min(targetFatG, Math.max(minimumFatG, maximumFatG)));
-
   if (calories < proteinG * 4) {
     return buildMacroResult(calories, Math.max(0, calories / 4), 0);
   }
+
+  const targetFatG = FAT_TARGET_G_PER_KG[type] * referenceWeight;
+  const maximumFatG = Math.max(0, (calories - proteinG * 4) / 9);
+  const fatG = Math.min(targetFatG, maximumFatG);
 
   return buildMacroResult(calories, proteinG, fatG);
 }
