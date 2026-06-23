@@ -1,4 +1,4 @@
-import type { CarbCyclingPlanResult, UserInput } from "./types";
+import type { CarbCyclingPlanResult, MacroResult, UserInput } from "./types";
 import {
   buildMacroResult,
   calculateCutCalories,
@@ -6,6 +6,21 @@ import {
   calculateTDEE
 } from "./formulas";
 import { buildCarbCycleWarnings } from "./warnings";
+
+type CarbDayType = "high" | "medium" | "low";
+
+const HIGH_DAY_CALORIE_MULTIPLIER = 1.18;
+const MEDIUM_DAY_CALORIE_MULTIPLIER = 1.0;
+const HIGH_DAY_TDEE_CAP = 0.95;
+
+const FAT_TARGET_G_PER_KG: Record<CarbDayType, number> = {
+  high: 0.45,
+  medium: 0.6,
+  low: 0.7
+};
+
+const MIN_FAT_G_PER_KG = 0.3;
+const MIN_FAT_G = 20;
 
 function getCarbCycleDayCounts(trainingDays: number) {
   if (trainingDays >= 4) return { high: 2, medium: 2, low: 3 };
@@ -36,6 +51,116 @@ function buildWeeklySchedule(trainingDays: number) {
   ];
 }
 
+function getMinimumFatG(referenceWeight: number): number {
+  return Math.max(MIN_FAT_G, MIN_FAT_G_PER_KG * referenceWeight);
+}
+
+function getMinimumCarbsG(type: CarbDayType, referenceWeight: number): number {
+  if (type === "high") return Math.max(80, 1.0 * referenceWeight);
+  if (type === "medium") return Math.max(50, 0.6 * referenceWeight);
+  return Math.max(25, 0.35 * referenceWeight);
+}
+
+function getMinimumCalories(
+  type: CarbDayType,
+  proteinG: number,
+  referenceWeight: number
+): number {
+  return proteinG * 4 + getMinimumFatG(referenceWeight) * 9 + getMinimumCarbsG(type, referenceWeight) * 4;
+}
+
+function calculateDayCalories({
+  avgCalories,
+  dayCounts,
+  proteinG,
+  referenceWeight,
+  tdee,
+  weeklyCalories
+}: {
+  avgCalories: number;
+  dayCounts: { high: number; medium: number; low: number };
+  proteinG: number;
+  referenceWeight: number;
+  tdee: number;
+  weeklyCalories: number;
+}) {
+  const highFloor = getMinimumCalories("high", proteinG, referenceWeight);
+  const mediumFloor = getMinimumCalories("medium", proteinG, referenceWeight);
+  const lowFloor = getMinimumCalories("low", proteinG, referenceWeight);
+
+  const targetHighCalories = Math.max(
+    highFloor,
+    Math.min(tdee * HIGH_DAY_TDEE_CAP, avgCalories * HIGH_DAY_CALORIE_MULTIPLIER)
+  );
+  const targetMediumCalories = Math.max(mediumFloor, avgCalories * MEDIUM_DAY_CALORIE_MULTIPLIER);
+
+  const lowProtectedBudget = weeklyCalories - dayCounts.low * lowFloor;
+  const highMediumFloorBudget =
+    dayCounts.high * highFloor + dayCounts.medium * mediumFloor;
+
+  if (lowProtectedBudget <= highMediumFloorBudget) {
+    const highCalories = highFloor;
+    const mediumCalories = mediumFloor;
+    const lowCalories = Math.max(
+      proteinG * 4 + getMinimumFatG(referenceWeight) * 9,
+      (weeklyCalories - dayCounts.high * highCalories - dayCounts.medium * mediumCalories) /
+        dayCounts.low
+    );
+
+    return { highCalories, mediumCalories, lowCalories };
+  }
+
+  const targetHighMediumBudget =
+    dayCounts.high * targetHighCalories + dayCounts.medium * targetMediumCalories;
+
+  if (targetHighMediumBudget <= lowProtectedBudget) {
+    return {
+      highCalories: targetHighCalories,
+      mediumCalories: targetMediumCalories,
+      lowCalories:
+        (weeklyCalories -
+          dayCounts.high * targetHighCalories -
+          dayCounts.medium * targetMediumCalories) /
+        dayCounts.low
+    };
+  }
+
+  const compressionRatio =
+    (lowProtectedBudget - highMediumFloorBudget) /
+    (targetHighMediumBudget - highMediumFloorBudget);
+
+  const highCalories =
+    highFloor + (targetHighCalories - highFloor) * compressionRatio;
+  const mediumCalories =
+    mediumFloor + (targetMediumCalories - mediumFloor) * compressionRatio;
+
+  return {
+    highCalories,
+    mediumCalories,
+    lowCalories:
+      (weeklyCalories - dayCounts.high * highCalories - dayCounts.medium * mediumCalories) /
+      dayCounts.low
+  };
+}
+
+function buildFeasibleMacroResult(
+  type: CarbDayType,
+  calories: number,
+  proteinG: number,
+  referenceWeight: number
+): MacroResult {
+  const targetFatG = FAT_TARGET_G_PER_KG[type] * referenceWeight;
+  const minimumFatG = getMinimumFatG(referenceWeight);
+  const maximumFatG = Math.max(0, (calories - proteinG * 4) / 9);
+  const fatG = Math.max(0, Math.min(targetFatG, Math.max(minimumFatG, maximumFatG)));
+
+  if (calories < proteinG * 4) {
+    return buildMacroResult(calories, Math.max(0, calories / 4), 0);
+  }
+
+  return buildMacroResult(calories, proteinG, fatG);
+}
+
 export function buildCarbCyclingPlan(input: UserInput): CarbCyclingPlanResult {
   const referenceWeight = input.targetWeightKg || input.weightKg;
 
@@ -51,38 +176,19 @@ export function buildCarbCyclingPlan(input: UserInput): CarbCyclingPlanResult {
   const avgCalories = cut.avgCutCalories;
   const weeklyCalories = avgCalories * 7;
   const dayCounts = getCarbCycleDayCounts(input.trainingDaysPerWeek);
-
-  let highCalories = tdee * 0.98;
-  const mediumCalories = avgCalories;
-
-  let lowCalories =
-    (weeklyCalories -
-      dayCounts.high * highCalories -
-      dayCounts.medium * mediumCalories) /
-    dayCounts.low;
-
-  if (lowCalories < 1500) {
-    highCalories = tdee * 0.95;
-    lowCalories =
-      (weeklyCalories -
-        dayCounts.high * highCalories -
-        dayCounts.medium * mediumCalories) /
-      dayCounts.low;
-  }
-
   const proteinG = 2.0 * referenceWeight;
+  const { highCalories, mediumCalories, lowCalories } = calculateDayCalories({
+    avgCalories,
+    dayCounts,
+    proteinG,
+    referenceWeight,
+    tdee,
+    weeklyCalories
+  });
 
-  let highFatG = 0.55 * referenceWeight;
-  let mediumFatG = 0.7 * referenceWeight;
-  let lowFatG = 0.9 * referenceWeight;
-
-  highFatG = Math.min(highFatG, (0.35 * highCalories) / 9);
-  mediumFatG = Math.min(mediumFatG, (0.35 * mediumCalories) / 9);
-  lowFatG = Math.min(lowFatG, (0.35 * lowCalories) / 9);
-
-  const highDay = buildMacroResult(highCalories, proteinG, highFatG);
-  const mediumDay = buildMacroResult(mediumCalories, proteinG, mediumFatG);
-  const lowDay = buildMacroResult(lowCalories, proteinG, lowFatG);
+  const highDay = buildFeasibleMacroResult("high", highCalories, proteinG, referenceWeight);
+  const mediumDay = buildFeasibleMacroResult("medium", mediumCalories, proteinG, referenceWeight);
+  const lowDay = buildFeasibleMacroResult("low", lowCalories, proteinG, referenceWeight);
 
   const warnings = buildCarbCycleWarnings(
     input,
