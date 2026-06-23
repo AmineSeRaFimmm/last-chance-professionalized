@@ -60,109 +60,30 @@ export interface WorkoutPlan {
   principles: string[];
 }
 
+interface FocusSlot {
+  focus: TrainingFocusKey;
+  carbType?: "High" | "Medium" | "Low";
+}
+
 export const WORKOUT_PROGRAM_OPTIONS: WorkoutProgramOption[] = [
-  {
-    id: "auto",
-    category: "default",
-    name: "Last Chance Auto",
-    description: "Default fat-loss program matched to saved nutrition and weekly structure.",
-    bestFor: "Most users who want the app to control recovery and adherence."
-  },
-  {
-    id: "powerlifting-531",
-    category: "powerlifting",
-    name: "5/3/1 Fat-Loss Strength",
-    description: "Four main-lift days with conservative assistance and recovery-first conditioning.",
-    bestFor: "Intermediate lifters who want strength retention during a cut."
-  },
-  {
-    id: "powerlifting-texas-method",
-    category: "powerlifting",
-    name: "Texas Method Cut Variant",
-    description: "Volume / recovery / intensity structure, compressed for calorie deficit recovery.",
-    bestFor: "Experienced barbell trainees who tolerate heavy weekly loading."
-  },
-  {
-    id: "powerlifting-starting-strength",
-    category: "powerlifting",
-    name: "Starting Strength Linear",
-    description: "Three full-body barbell sessions built around squat, press, bench, deadlift, and rows.",
-    bestFor: "Novice lifters who can still progress linearly."
-  },
-  {
-    id: "bodybuilding-ppl",
-    category: "bodybuilding",
-    name: "Push Pull Legs",
-    description: "Hypertrophy-oriented split with cut-adjusted volume and non-failure execution.",
-    bestFor: "Gym users training 4–6 days per week."
-  },
-  {
-    id: "bodybuilding-upper-lower",
-    category: "bodybuilding",
-    name: "Upper / Lower",
-    description: "Balanced four-day split with clear recovery days and repeatable progression.",
-    bestFor: "Most fat-loss users with 3–4 lifting days."
-  },
-  {
-    id: "bodybuilding-full-body",
-    category: "bodybuilding",
-    name: "Full Body Hypertrophy",
-    description: "Three full-body sessions emphasizing large patterns and moderate joint stress.",
-    bestFor: "Busy users or beginners who need high consistency."
-  },
-  {
-    id: "machine-full-body",
-    category: "machine",
-    name: "Machine Full Body",
-    description: "Stable machine-based plan that reduces technical complexity and injury risk.",
-    bestFor: "Beginners, hotel gyms, or users who prefer guided equipment."
-  },
-  {
-    id: "machine-upper-lower",
-    category: "machine",
-    name: "Machine Upper / Lower",
-    description: "Four sessions using machines and cables with controlled fatigue.",
-    bestFor: "Gym users cutting hard but wanting predictable execution."
-  },
-  {
-    id: "crossfit-strength-metcon",
-    category: "crossfit",
-    name: "Strength + MetCon",
-    description: "Strength primer plus short conditioning blocks, avoiding excessive cut fatigue.",
-    bestFor: "Conditioning-focused users with solid movement skill."
-  },
-  {
-    id: "crossfit-beginner-wod",
-    category: "crossfit",
-    name: "Beginner WOD Structure",
-    description: "Simple mixed-modal training with skill practice, strength, and controlled finishers.",
-    bestFor: "Users who want CrossFit-style variety without advanced Olympic lifting."
-  },
-  {
-    id: "general-strength-fat-loss",
-    category: "generalStrength",
-    name: "General Strength Cut",
-    description: "Low-friction strength plan for muscle retention, steps, and recovery.",
-    bestFor: "General fat-loss users who do not need sport specialization."
-  },
-  {
-    id: "home-minimal-equipment",
-    category: "home",
-    name: "Home Minimal Equipment",
-    description: "Dumbbells, bands, bodyweight, walking, and simple progressive overload.",
-    bestFor: "Home training or travel weeks."
-  }
+  { id: "auto", category: "default", name: "Last Chance Auto", description: "Default fat-loss program matched to saved nutrition and weekly structure.", bestFor: "Most users who want the app to control recovery and adherence." },
+  { id: "powerlifting-531", category: "powerlifting", name: "5/3/1 Fat-Loss Strength", description: "Four main-lift days with conservative assistance and recovery-first conditioning.", bestFor: "Intermediate lifters who want strength retention during a cut." },
+  { id: "powerlifting-texas-method", category: "powerlifting", name: "Texas Method Cut Variant", description: "Volume / recovery / intensity structure, compressed for calorie deficit recovery.", bestFor: "Experienced barbell trainees who tolerate heavy weekly loading." },
+  { id: "powerlifting-starting-strength", category: "powerlifting", name: "Starting Strength Linear", description: "Three full-body barbell sessions built around squat, press, bench, deadlift, and rows.", bestFor: "Novice lifters who can still progress linearly." },
+  { id: "bodybuilding-ppl", category: "bodybuilding", name: "Push Pull Legs", description: "Hypertrophy-oriented split with cut-adjusted volume and non-failure execution.", bestFor: "Gym users training 4–6 days per week." },
+  { id: "bodybuilding-upper-lower", category: "bodybuilding", name: "Upper / Lower", description: "Balanced four-day split with clear recovery days and repeatable progression.", bestFor: "Most fat-loss users with 3–4 lifting days." },
+  { id: "bodybuilding-full-body", category: "bodybuilding", name: "Full Body Hypertrophy", description: "Three full-body sessions emphasizing large patterns and moderate joint stress.", bestFor: "Busy users or beginners who need high consistency." },
+  { id: "machine-full-body", category: "machine", name: "Machine Full Body", description: "Stable machine-based plan that reduces technical complexity and injury risk.", bestFor: "Beginners, hotel gyms, or users who prefer guided equipment." },
+  { id: "machine-upper-lower", category: "machine", name: "Machine Upper / Lower", description: "Four sessions using machines and cables with controlled fatigue.", bestFor: "Gym users cutting hard but wanting predictable execution." },
+  { id: "crossfit-strength-metcon", category: "crossfit", name: "Strength + MetCon", description: "Strength primer plus short conditioning blocks, avoiding excessive cut fatigue.", bestFor: "Conditioning-focused users with solid movement skill." },
+  { id: "crossfit-beginner-wod", category: "crossfit", name: "Beginner WOD Structure", description: "Simple mixed-modal training with skill practice, strength, and controlled finishers.", bestFor: "Users who want CrossFit-style variety without advanced Olympic lifting." },
+  { id: "general-strength-fat-loss", category: "generalStrength", name: "General Strength Cut", description: "Low-friction strength plan for muscle retention, steps, and recovery.", bestFor: "General fat-loss users who do not need sport specialization." },
+  { id: "home-minimal-equipment", category: "home", name: "Home Minimal Equipment", description: "Dumbbells, bands, bodyweight, walking, and simple progressive overload.", bestFor: "Home training or travel weeks." }
 ];
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-export function buildWorkoutPlan({
-  input,
-  result,
-  programId,
-  rotationOffset,
-  focusByDay
-}: {
+export function buildWorkoutPlan({ input, result, programId, rotationOffset, focusByDay }: {
   input: UserInput;
   result: PlanResult;
   programId: WorkoutProgramId;
@@ -170,110 +91,43 @@ export function buildWorkoutPlan({
   focusByDay: FocusByDay;
 }): WorkoutPlan {
   const program = resolveProgram(programId, input);
+  const slots = buildFocusSlots(input, result, program.id, rotationOffset, focusByDay);
+  const days = DAYS.map((day, index) => buildDay(day, slots[index], program.id, input.trainingDaysPerWeek));
 
-  if (result.kind === "carbCycling" && program.id === "auto") {
-    return buildCarbCyclingAutoPlan(input, result, program, rotationOffset, focusByDay);
-  }
-
-  if (program.id === "auto") {
-    return buildStandardAutoPlan(input, result, program);
-  }
-
-  return buildSpecializedPlan(input, result, program, rotationOffset, focusByDay);
+  return {
+    title: result.kind === "carbCycling" && program.id === "auto" ? "Carb Cycling Workout Week" : program.id === "auto" ? "Standard Fat-Loss Workout Week" : program.name,
+    subtitle: buildSubtitle(input, result, program),
+    program,
+    days,
+    principles: getFatLossPrinciples(result.kind)
+  };
 }
 
 function resolveProgram(programId: WorkoutProgramId, input: UserInput): WorkoutProgramOption {
-  if (programId !== "auto") {
-    return WORKOUT_PROGRAM_OPTIONS.find((option) => option.id === programId) ?? WORKOUT_PROGRAM_OPTIONS[0];
-  }
-
+  if (programId !== "auto") return WORKOUT_PROGRAM_OPTIONS.find((option) => option.id === programId) ?? WORKOUT_PROGRAM_OPTIONS[0];
   return {
     ...WORKOUT_PROGRAM_OPTIONS[0],
-    description:
-      input.planType === "carbCycling"
-        ? "Default workout week aligned to your carb cycling structure."
-        : "Default fat-loss workout week matched to your training frequency."
+    description: input.planType === "carbCycling" ? "Default workout week aligned to your carb cycling structure." : "Default fat-loss workout week matched to your training frequency."
   };
 }
 
-function buildCarbCyclingAutoPlan(
-  input: UserInput,
-  result: CarbCyclingPlanResult,
-  program: WorkoutProgramOption,
-  rotationOffset: number,
-  focusByDay: FocusByDay
-): WorkoutPlan {
-  const rotatedTypes = rotateCarbTypes(result.weeklySchedule.map((row) => row.type), rotationOffset);
-  const days = result.weeklySchedule.map((row, index) => {
-    const focus = focusByDay[row.day] ?? inferFocus(row.note);
-    return buildDay(row.day, focus, rotatedTypes[index], "auto", input.trainingDaysPerWeek);
-  });
-
-  return {
-    title: "Carb Cycling Workout Week",
-    subtitle: "Training stress is matched to high, medium, and low carb days from your saved weekly structure.",
-    program,
-    days,
-    principles: getFatLossPrinciples("carbCycling")
-  };
+function buildSubtitle(input: UserInput, result: PlanResult, program: WorkoutProgramOption): string {
+  if (result.kind === "carbCycling" && program.id === "auto") return "Training stress is matched to high, medium, and low carb days from your saved weekly structure.";
+  if (program.id === "auto") return `Built around ${input.trainingDaysPerWeek} training days, progressive overload, steps, and recovery.`;
+  return program.description;
 }
 
-function buildStandardAutoPlan(input: UserInput, result: PlanResult, program: WorkoutProgramOption): WorkoutPlan {
-  const focusSequence = getStandardFocusSequence(input.trainingDaysPerWeek);
-  const days = DAYS.map((day, index) => buildDay(day, focusSequence[index], undefined, "auto", input.trainingDaysPerWeek));
-
-  return {
-    title: "Standard Fat-Loss Workout Week",
-    subtitle: `Built around ${input.trainingDaysPerWeek} training days, progressive overload, steps, and recovery.`,
-    program,
-    days,
-    principles: getFatLossPrinciples(result.kind)
-  };
+function buildFocusSlots(input: UserInput, result: PlanResult, programId: WorkoutProgramId, rotationOffset: number, focusByDay: FocusByDay): FocusSlot[] {
+  if (result.kind === "carbCycling") return buildCarbFocusSlots(result, rotationOffset, focusByDay);
+  return getProgramFocusSequence(programId, input.trainingDaysPerWeek).map((focus) => ({ focus }));
 }
 
-function buildSpecializedPlan(
-  input: UserInput,
-  result: PlanResult,
-  program: WorkoutProgramOption,
-  rotationOffset: number,
-  focusByDay: FocusByDay
-): WorkoutPlan {
-  const baseFocus = result.kind === "carbCycling"
-    ? buildCarbFocusSequence(result, rotationOffset, focusByDay)
-    : getProgramFocusSequence(program.id, input.trainingDaysPerWeek);
-
-  const days = DAYS.map((day, index) => {
-    const carbType = result.kind === "carbCycling" ? baseFocus[index].carbType : undefined;
-    const focus = baseFocus[index].focus;
-    return buildDay(day, focus, carbType, program.id, input.trainingDaysPerWeek);
-  });
-
-  return {
-    title: program.name,
-    subtitle: program.description,
-    program,
-    days,
-    principles: getFatLossPrinciples(result.kind)
-  };
-}
-
-function buildCarbFocusSequence(
-  result: CarbCyclingPlanResult,
-  rotationOffset: number,
-  focusByDay: FocusByDay
-): { focus: TrainingFocusKey; carbType?: "High" | "Medium" | "Low" }[] {
+function buildCarbFocusSlots(result: CarbCyclingPlanResult, rotationOffset: number, focusByDay: FocusByDay): FocusSlot[] {
   const rotatedTypes = rotateCarbTypes(result.weeklySchedule.map((row) => row.type), rotationOffset);
   return result.weeklySchedule.map((row, index) => ({
     focus: focusByDay[row.day] ?? inferFocus(row.note),
     carbType: rotatedTypes[index]
   }));
-}
-
-function getStandardFocusSequence(trainingDays: number): TrainingFocusKey[] {
-  if (trainingDays <= 2) return ["fullBody", "walkRecovery", "fullBody", "walkRecovery", "lightCardio", "walkRecovery", "rest"];
-  if (trainingDays === 3) return ["fullBody", "walkRecovery", "upperBody", "walkRecovery", "fullBody", "lightCardio", "rest"];
-  if (trainingDays === 4) return ["heavyLegs", "upperBody", "walkRecovery", "backDeadlift", "upperBody", "lightCardio", "rest"];
-  return ["heavyLegs", "push", "pull", "walkRecovery", "fullBody", "lightCardio", "rest"];
 }
 
 function getProgramFocusSequence(programId: WorkoutProgramId, trainingDays: number): TrainingFocusKey[] {
@@ -288,29 +142,23 @@ function getProgramFocusSequence(programId: WorkoutProgramId, trainingDays: numb
   if (programId === "crossfit-strength-metcon") return ["strength", "lightCardio", "strength", "walkRecovery", "fullBody", "lightCardio", "rest"];
   if (programId === "crossfit-beginner-wod") return ["fullBody", "walkRecovery", "strength", "walkRecovery", "fullBody", "lightCardio", "rest"];
   if (programId === "home-minimal-equipment") return ["fullBody", "walkRecovery", "upperBody", "walkRecovery", "heavyLegs", "lightCardio", "rest"];
-  return getStandardFocusSequence(trainingDays);
+  if (trainingDays <= 2) return ["fullBody", "walkRecovery", "fullBody", "walkRecovery", "lightCardio", "walkRecovery", "rest"];
+  if (trainingDays === 3) return ["fullBody", "walkRecovery", "upperBody", "walkRecovery", "fullBody", "lightCardio", "rest"];
+  if (trainingDays === 4) return ["heavyLegs", "upperBody", "walkRecovery", "backDeadlift", "upperBody", "lightCardio", "rest"];
+  return ["heavyLegs", "push", "pull", "walkRecovery", "fullBody", "lightCardio", "rest"];
 }
 
-function buildDay(
-  day: string,
-  focus: TrainingFocusKey,
-  carbType: "High" | "Medium" | "Low" | undefined,
-  programId: WorkoutProgramId,
-  trainingDays: number
-): WorkoutDay {
-  const lowCarbRecovery = carbType === "Low" && isRecoveryFocus(focus);
-  const intent = buildIntent(focus, carbType);
-  const exercises = lowCarbRecovery
-    ? recoveryExercises(focus)
-    : exercisesForFocus(focus, programId, carbType, trainingDays);
-
+function buildDay(day: string, slot: FocusSlot, programId: WorkoutProgramId, trainingDays: number): WorkoutDay {
+  const { focus, carbType } = slot;
+  const recoveryOnly = isRecoveryFocus(focus) || (carbType === "Low" && isRecoveryFocus(focus));
+  const exercises = recoveryOnly ? recoveryExercises(focus) : exercisesForFocus(focus, programId, carbType, trainingDays);
   return {
     day,
     title: titleForFocus(focus, programId),
     carbType,
     focus,
-    intent,
-    duration: lowCarbRecovery ? "25–45 min" : focus === "strength" ? "45–60 min" : "50–75 min",
+    intent: buildIntent(focus, carbType),
+    duration: recoveryOnly ? "25–45 min" : focus === "strength" ? "45–60 min" : "50–75 min",
     intensity: intensityFor(focus, carbType),
     exercises,
     conditioning: conditioningFor(focus, carbType, programId),
@@ -318,81 +166,56 @@ function buildDay(
   };
 }
 
-function exercisesForFocus(
-  focus: TrainingFocusKey,
-  programId: WorkoutProgramId,
-  carbType: "High" | "Medium" | "Low" | undefined,
-  trainingDays: number
-): WorkoutExercise[] {
+function exercisesForFocus(focus: TrainingFocusKey, programId: WorkoutProgramId, carbType: "High" | "Medium" | "Low" | undefined, trainingDays: number): WorkoutExercise[] {
   const volumeNote = carbType === "Low" ? "keep 2–3 reps in reserve" : "stop 1–2 reps before failure";
-
   if (programId === "powerlifting-531") return powerlifting531Exercises(focus);
   if (programId === "powerlifting-texas-method") return texasMethodExercises(focus);
   if (programId === "powerlifting-starting-strength") return startingStrengthExercises(focus);
   if (programId === "machine-full-body" || programId === "machine-upper-lower") return machineExercises(focus);
   if (programId === "crossfit-strength-metcon" || programId === "crossfit-beginner-wod") return crossfitExercises(focus);
   if (programId === "home-minimal-equipment") return homeExercises(focus);
-
-  if (focus === "heavyLegs") {
-    return [
-      { name: "Back squat", prescription: "4 × 4–6", note: volumeNote },
-      { name: "Romanian deadlift", prescription: "3 × 6–8" },
-      { name: "Leg press or split squat", prescription: "3 × 8–10" },
-      { name: "Hamstring curl", prescription: "2–3 × 10–12" },
-      { name: "Standing calf raise", prescription: "3 × 10–15" }
-    ];
-  }
-
-  if (focus === "backDeadlift") {
-    return [
-      { name: "Deadlift", prescription: "3 × 3–5", note: volumeNote },
-      { name: "Chest-supported row", prescription: "4 × 6–10" },
-      { name: "Lat pulldown or pull-up", prescription: "3 × 8–10" },
-      { name: "Hip hinge accessory", prescription: "2 × 8–10" },
-      { name: "Loaded carry", prescription: "4 × 30–40 m" }
-    ];
-  }
-
-  if (focus === "upperBody") {
-    return [
-      { name: "Bench press", prescription: "4 × 5–8", note: volumeNote },
-      { name: "Row", prescription: "4 × 6–10" },
-      { name: "Overhead press", prescription: "3 × 6–8" },
-      { name: "Pulldown or pull-up", prescription: "3 × 8–10" },
-      { name: "Lateral raise + curls", prescription: "2–3 × 12–15" }
-    ];
-  }
-
-  if (focus === "push") {
-    return [
-      { name: "Bench press", prescription: "4 × 5–8" },
-      { name: "Incline dumbbell press", prescription: "3 × 8–10" },
-      { name: "Overhead press", prescription: "3 × 6–8" },
-      { name: "Lateral raise", prescription: "3 × 12–15" },
-      { name: "Triceps pressdown", prescription: "3 × 10–15" }
-    ];
-  }
-
-  if (focus === "pull") {
-    return [
-      { name: "Pull-up or pulldown", prescription: "4 × 6–10" },
-      { name: "Barbell or cable row", prescription: "4 × 6–10" },
-      { name: "Rear delt raise", prescription: "3 × 12–15" },
-      { name: "Back extension", prescription: "2–3 × 10–12" },
-      { name: "Curl variation", prescription: "3 × 10–15" }
-    ];
-  }
-
-  if (focus === "fullBody" || focus === "strength") {
-    return [
-      { name: "Squat pattern", prescription: trainingDays <= 3 ? "4 × 5" : "3 × 5" },
-      { name: "Press pattern", prescription: "3–4 × 5–8" },
-      { name: "Pull pattern", prescription: "4 × 6–10" },
-      { name: "Hip hinge", prescription: "2–3 × 6–8" },
-      { name: "Core anti-extension", prescription: "3 × 30–45 sec" }
-    ];
-  }
-
+  if (focus === "heavyLegs") return [
+    { name: "Back squat", prescription: "4 × 4–6", note: volumeNote },
+    { name: "Romanian deadlift", prescription: "3 × 6–8" },
+    { name: "Leg press or split squat", prescription: "3 × 8–10" },
+    { name: "Hamstring curl", prescription: "2–3 × 10–12" },
+    { name: "Standing calf raise", prescription: "3 × 10–15" }
+  ];
+  if (focus === "backDeadlift") return [
+    { name: "Deadlift", prescription: "3 × 3–5", note: volumeNote },
+    { name: "Chest-supported row", prescription: "4 × 6–10" },
+    { name: "Lat pulldown or pull-up", prescription: "3 × 8–10" },
+    { name: "Hip hinge accessory", prescription: "2 × 8–10" },
+    { name: "Loaded carry", prescription: "4 × 30–40 m" }
+  ];
+  if (focus === "upperBody") return [
+    { name: "Bench press", prescription: "4 × 5–8", note: volumeNote },
+    { name: "Row", prescription: "4 × 6–10" },
+    { name: "Overhead press", prescription: "3 × 6–8" },
+    { name: "Pulldown or pull-up", prescription: "3 × 8–10" },
+    { name: "Lateral raise + curls", prescription: "2–3 × 12–15" }
+  ];
+  if (focus === "push") return [
+    { name: "Bench press", prescription: "4 × 5–8" },
+    { name: "Incline dumbbell press", prescription: "3 × 8–10" },
+    { name: "Overhead press", prescription: "3 × 6–8" },
+    { name: "Lateral raise", prescription: "3 × 12–15" },
+    { name: "Triceps pressdown", prescription: "3 × 10–15" }
+  ];
+  if (focus === "pull") return [
+    { name: "Pull-up or pulldown", prescription: "4 × 6–10" },
+    { name: "Barbell or cable row", prescription: "4 × 6–10" },
+    { name: "Rear delt raise", prescription: "3 × 12–15" },
+    { name: "Back extension", prescription: "2–3 × 10–12" },
+    { name: "Curl variation", prescription: "3 × 10–15" }
+  ];
+  if (focus === "fullBody" || focus === "strength") return [
+    { name: "Squat pattern", prescription: trainingDays <= 3 ? "4 × 5" : "3 × 5" },
+    { name: "Press pattern", prescription: "3–4 × 5–8" },
+    { name: "Pull pattern", prescription: "4 × 6–10" },
+    { name: "Hip hinge", prescription: "2–3 × 6–8" },
+    { name: "Core anti-extension", prescription: "3 × 30–45 sec" }
+  ];
   return recoveryExercises(focus);
 }
 
@@ -408,23 +231,23 @@ function powerlifting531Exercises(focus: TrainingFocusKey): WorkoutExercise[] {
 }
 
 function texasMethodExercises(focus: TrainingFocusKey): WorkoutExercise[] {
-  if (focus === "fullBody") return [
-    { name: "Squat volume", prescription: "5 × 5", note: "reduce load 5–10% if recovery drops" },
-    { name: "Bench or press volume", prescription: "5 × 5" },
-    { name: "Row", prescription: "4 × 8" },
-    { name: "Back extension", prescription: "3 × 10" }
-  ];
   if (focus === "strength") return [
     { name: "Squat intensity", prescription: "1 × 5 or 3 × 3" },
     { name: "Bench or press intensity", prescription: "1 × 5 or 3 × 3" },
     { name: "Deadlift", prescription: "1–2 × 5" },
     { name: "Chin-up", prescription: "3 sets" }
   ];
-  return recoveryExercises(focus);
+  if (focus === "walkRecovery" || focus === "lightCardio" || focus === "rest") return recoveryExercises(focus);
+  return [
+    { name: "Squat volume", prescription: "5 × 5", note: "reduce load 5–10% if recovery drops" },
+    { name: "Bench or press volume", prescription: "5 × 5" },
+    { name: "Row", prescription: "4 × 8" },
+    { name: "Back extension", prescription: "3 × 10" }
+  ];
 }
 
 function startingStrengthExercises(focus: TrainingFocusKey): WorkoutExercise[] {
-  if (focus === "walkRecovery" || focus === "lightCardio" || focus === "rest") return recoveryExercises(focus);
+  if (isRecoveryFocus(focus)) return recoveryExercises(focus);
   return [
     { name: "Squat", prescription: "3 × 5" },
     { name: "Bench press or overhead press", prescription: "3 × 5", note: "alternate each session" },
@@ -452,7 +275,7 @@ function machineExercises(focus: TrainingFocusKey): WorkoutExercise[] {
 }
 
 function crossfitExercises(focus: TrainingFocusKey): WorkoutExercise[] {
-  if (focus === "walkRecovery" || focus === "rest") return recoveryExercises(focus);
+  if (isRecoveryFocus(focus)) return recoveryExercises(focus);
   return [
     { name: "Skill practice", prescription: "8–10 min", note: "simple gymnastics, carries, or technique" },
     { name: "Strength primer", prescription: "5 × 3 or 4 × 5", note: "submaximal, crisp reps" },
@@ -462,7 +285,7 @@ function crossfitExercises(focus: TrainingFocusKey): WorkoutExercise[] {
 }
 
 function homeExercises(focus: TrainingFocusKey): WorkoutExercise[] {
-  if (focus === "walkRecovery" || focus === "lightCardio" || focus === "rest") return recoveryExercises(focus);
+  if (isRecoveryFocus(focus)) return recoveryExercises(focus);
   return [
     { name: "Goblet squat or split squat", prescription: "4 × 8–12" },
     { name: "Push-up or dumbbell press", prescription: "4 × 8–12" },
@@ -547,14 +370,11 @@ function rotateCarbTypes(types: ("High" | "Medium" | "Low")[], offset: number): 
 }
 
 function getFatLossPrinciples(kind: PlanResult["kind"]): string[] {
-  if (kind === "carbCycling") {
-    return [
-      "High-carb days carry the hardest strength work; low-carb days protect recovery.",
-      "Keep 1–3 reps in reserve on most sets during aggressive cuts.",
-      "Conditioning should support fat loss without stealing recovery from heavy sessions."
-    ];
-  }
-
+  if (kind === "carbCycling") return [
+    "High-carb days carry the hardest strength work; low-carb days protect recovery.",
+    "Keep 1–3 reps in reserve on most sets during aggressive cuts.",
+    "Conditioning should support fat loss without stealing recovery from heavy sessions."
+  ];
   return [
     "Train each major pattern at least twice weekly when possible.",
     "Use progressive overload, but do not chase personal records during hard deficits.",
