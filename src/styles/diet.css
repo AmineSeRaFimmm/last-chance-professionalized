@@ -128,8 +128,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  background: rgba(245, 245, 247, 0.52);
+  padding: 22px 14px;
+  background: rgba(245, 245, 247, 0.5);
   backdrop-filter: blur(24px) saturate(1.18);
   overflow: hidden;
 }
@@ -138,13 +138,13 @@
   position: absolute;
   inset: 0;
   border: 0;
-  background: radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.72), rgba(245, 245, 247, 0.38) 42%, rgba(210, 210, 218, 0.32));
+  background: radial-gradient(circle at 50% 26%, rgba(255, 255, 255, 0.68), rgba(245, 245, 247, 0.34) 43%, rgba(210, 210, 218, 0.3));
   cursor: default;
 }
 
 .ingredient-orbit {
   position: absolute;
-  inset: 0;
+  inset: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
   pointer-events: none;
 }
 
@@ -153,13 +153,13 @@
   z-index: 1;
   display: grid;
   gap: 4px;
-  width: min(35vw, 154px);
-  min-height: 78px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 21px;
-  padding: 11px 12px;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
+  width: min(31vw, 136px);
+  min-height: 58px;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 19px;
+  padding: 9px 10px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
   color: var(--text);
   text-align: left;
   cursor: grab;
@@ -172,27 +172,18 @@
 }
 
 .ingredient-chip span,
-.meal-composer-topline span,
-.meal-selected-head span,
-.meal-macro-badge span {
+.meal-selected-head span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .ingredient-chip strong {
-  font-size: 13px;
-  line-height: 1.1;
+  font-size: 12px;
+  line-height: 1.12;
   letter-spacing: -0.02em;
-}
-
-.ingredient-chip em {
-  color: var(--muted);
-  font-size: 11px;
-  font-style: normal;
-  line-height: 1.25;
 }
 
 .ingredient-chip.protein,
@@ -218,19 +209,17 @@
 .meal-composer-card {
   position: relative;
   z-index: 2;
-  width: min(100%, 410px);
-  max-height: min(86vh, 720px);
+  width: min(82vw, 360px);
+  max-height: min(56vh, 420px);
   overflow: auto;
   border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: 32px;
-  padding: 18px;
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.16);
+  border-radius: 28px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.14);
   backdrop-filter: blur(24px) saturate(1.2);
 }
 
-.meal-composer-topline,
-.meal-composer-title-row,
 .meal-selected-head {
   display: flex;
   align-items: flex-start;
@@ -238,89 +227,12 @@
   gap: 14px;
 }
 
-.meal-composer-topline strong {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.meal-composer-title-row {
-  margin-top: 14px;
-}
-
-.meal-composer-title-row h2 {
-  margin: 0;
-  font-size: 30px;
-  line-height: 0.98;
-  letter-spacing: -0.06em;
-}
-
-.meal-composer-title-row p {
-  margin: 9px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.meal-composer-status {
-  flex: 0 0 auto;
-  border-radius: 999px;
-  padding: 7px 10px;
-  background: #f2f2f7;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.meal-composer-status.balanced {
-  background: rgba(52, 199, 89, 0.14);
-  color: #187a33;
-}
-
-.meal-composer-status.needs-protein,
-.meal-composer-status.empty {
-  background: rgba(255, 149, 0, 0.15);
-  color: #9a5a00;
-}
-
-.meal-composer-targets {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.meal-macro-badge {
-  display: grid;
-  gap: 5px;
-  border-radius: 20px;
-  padding: 13px;
-  background: #f5f5f7;
-}
-
-.meal-macro-badge strong {
-  font-size: 18px;
-  letter-spacing: -0.04em;
-}
-
-.meal-macro-badge em {
-  color: var(--muted);
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 700;
-}
-
 .meal-selected-zone {
-  min-height: 150px;
-  margin-top: 14px;
+  min-height: 138px;
   border: 1px dashed rgba(110, 110, 115, 0.32);
-  border-radius: 24px;
-  padding: 14px;
+  border-radius: 22px;
+  padding: 13px;
   background: rgba(245, 245, 247, 0.74);
-}
-
-.meal-selected-head strong {
-  font-size: 13px;
 }
 
 .meal-selected-list {
@@ -353,13 +265,15 @@
 
 .meal-composer-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-top: 14px;
+  width: 100%;
+  margin-top: 10px;
 }
 
 .meal-composer-actions .secondary-button,
 .meal-composer-actions .primary-button {
+  width: 100%;
   margin-top: 0;
   padding: 12px 10px;
   border-radius: 17px;
@@ -381,23 +295,43 @@
   }
 
   .meal-composer-overlay {
-    padding: 14px;
+    align-items: center;
+    padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
   }
 
   .ingredient-chip {
-    width: 132px;
-    min-height: 70px;
-    padding: 9px 10px;
+    width: 112px;
+    min-height: 54px;
+    padding: 8px 9px;
+    border-radius: 17px;
+  }
+
+  .ingredient-chip span {
+    font-size: 9px;
+  }
+
+  .ingredient-chip strong {
+    font-size: 11px;
   }
 
   .meal-composer-card {
-    width: 92vw;
-    padding: 16px;
+    width: 76vw;
+    max-height: 44vh;
+    padding: 10px;
+    border-radius: 25px;
   }
 
-  .meal-composer-title-row,
-  .meal-composer-targets,
-  .meal-composer-actions {
-    grid-template-columns: 1fr;
+  .meal-selected-zone {
+    min-height: 116px;
+    padding: 11px;
+  }
+
+  .selected-food-pill {
+    padding: 6px 8px;
+  }
+
+  .selected-food-pill span,
+  .selected-food-pill strong {
+    font-size: 11px;
   }
 }
