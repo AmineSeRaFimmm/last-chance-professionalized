@@ -7,7 +7,8 @@ import {
   WORKOUT_PROGRAM_OPTIONS,
   type WorkoutDay,
   type WorkoutProgramCategory,
-  type WorkoutProgramId
+  type WorkoutProgramId,
+  type WorkoutProgramOption
 } from "../core/workoutPlan";
 import { loadInput } from "../storage/localPlan";
 import {
@@ -28,10 +29,7 @@ const copy = {
     emptyText: "Go to Plan, complete your data, then tap Save plan locally.",
     changePlan: "Change Plan",
     done: "Done",
-    auto: "Auto",
     principles: "Principles",
-    duration: "Duration",
-    intensity: "Intensity",
     intent: "Intent",
     conditioning: "Conditioning",
     recovery: "Recovery",
@@ -55,10 +53,7 @@ const copy = {
     emptyText: "先进入 Plan，填完数据后点击保存到本机。",
     changePlan: "更换计划",
     done: "完成",
-    auto: "自动",
     principles: "执行原则",
-    duration: "时长",
-    intensity: "强度",
     intent: "目标",
     conditioning: "体能",
     recovery: "恢复",
@@ -82,8 +77,28 @@ export function WorkoutPlanner() {
   const savedInput = loadInput();
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [programId, setProgramId] = useState<WorkoutProgramId>(loadProgramId);
+  const result = useMemo(() => (savedInput ? buildResult(savedInput) : null), [savedInput]);
+  const plan = useMemo(
+    () =>
+      savedInput && result
+        ? buildWorkoutPlan({
+            input: savedInput,
+            result,
+            programId,
+            rotationOffset: loadCarbRotationOffset(),
+            focusByDay: loadTrainingFocusByDay()
+          })
+        : null,
+    [programId, savedInput, result]
+  );
 
-  if (!savedInput) {
+  function chooseProgram(nextProgramId: WorkoutProgramId) {
+    setProgramId(nextProgramId);
+    window.localStorage.setItem(PROGRAM_KEY, nextProgramId);
+    setSelectorOpen(false);
+  }
+
+  if (!savedInput || !result || !plan) {
     return (
       <main className="app-shell workout-shell">
         <section className="hero workout-hero">
@@ -97,25 +112,6 @@ export function WorkoutPlanner() {
         </section>
       </main>
     );
-  }
-
-  const result = buildResult(savedInput);
-  const plan = useMemo(
-    () =>
-      buildWorkoutPlan({
-        input: savedInput,
-        result,
-        programId,
-        rotationOffset: loadCarbRotationOffset(),
-        focusByDay: loadTrainingFocusByDay()
-      }),
-    [programId, savedInput, result]
-  );
-
-  function chooseProgram(nextProgramId: WorkoutProgramId) {
-    setProgramId(nextProgramId);
-    window.localStorage.setItem(PROGRAM_KEY, nextProgramId);
-    setSelectorOpen(false);
   }
 
   return (
@@ -145,16 +141,12 @@ export function WorkoutPlanner() {
       <section className="card">
         <div className="card-title">{t.principles}</div>
         <div className="principle-stack">
-          {plan.principles.map((principle) => (
-            <div className="principle-line" key={principle}>{principle}</div>
-          ))}
+          {plan.principles.map((principle) => <div className="principle-line" key={principle}>{principle}</div>)}
         </div>
       </section>
 
       <div className="workout-week-stack">
-        {plan.days.map((day) => (
-          <WorkoutDayCard day={day} labels={t} key={day.day} />
-        ))}
+        {plan.days.map((day) => <WorkoutDayCard day={day} labels={t} key={day.day} />)}
       </div>
 
       {selectorOpen && (
@@ -173,12 +165,7 @@ export function WorkoutPlanner() {
               <div className="program-category" key={category}>
                 <div className="program-category-title">{t.categories[category]}</div>
                 {options.map((option) => (
-                  <button
-                    className={`program-option ${programId === option.id ? "active" : ""}`}
-                    type="button"
-                    onClick={() => chooseProgram(option.id)}
-                    key={option.id}
-                  >
+                  <button className={`program-option ${programId === option.id ? "active" : ""}`} type="button" onClick={() => chooseProgram(option.id)} key={option.id}>
                     <strong>{option.name}</strong>
                     <span>{option.description}</span>
                   </button>
@@ -196,10 +183,7 @@ function WorkoutDayCard({ day, labels }: { day: WorkoutDay; labels: typeof copy.
   return (
     <section className="card workout-day-card">
       <div className="workout-day-head">
-        <div>
-          <div className="card-title no-margin">{day.day}</div>
-          <strong>{day.title}</strong>
-        </div>
+        <div><div className="card-title no-margin">{day.day}</div><strong>{day.title}</strong></div>
         <div className="workout-day-badges">
           {day.carbType && <span className={`day-type ${day.carbType.toLowerCase()}`}>{day.carbType}</span>}
           <span>{day.duration}</span>
@@ -241,7 +225,7 @@ function loadProgramId(): WorkoutProgramId {
   return WORKOUT_PROGRAM_OPTIONS.some((option) => option.id === stored) ? stored : "auto";
 }
 
-function groupPrograms(): [WorkoutProgramCategory, typeof WORKOUT_PROGRAM_OPTIONS][] {
+function groupPrograms(): [WorkoutProgramCategory, WorkoutProgramOption[]][] {
   const categories: WorkoutProgramCategory[] = ["default", "powerlifting", "bodybuilding", "machine", "crossfit", "generalStrength", "home"];
   return categories.map((category) => [category, WORKOUT_PROGRAM_OPTIONS.filter((option) => option.category === category)]);
 }
