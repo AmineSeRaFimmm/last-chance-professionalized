@@ -7,6 +7,9 @@ interface ProjectionItem {
 
 const PIXELS_PER_WEEK = 34;
 const FLICK_VELOCITY = 0.65;
+const AUTOPLAY_INTERVAL_MS = 1000;
+const EXIT_CLASS_CLEAR_MS = 520;
+const autoplayTimers = new WeakMap<HTMLElement, number>();
 
 export function installProjectionWheel(): void {
   if (installed || typeof document === "undefined") return;
@@ -30,13 +33,17 @@ function setupProjectionCard(table: HTMLElement): void {
   const signature = buildProjectionSignature(items);
   if (table.dataset.projectionSignature !== signature) {
     table.dataset.projectionSignature = signature;
+    table.dataset.projectionActiveIndex = "0";
     setActiveRow(rows, 0);
+    restartAutoplay(table);
   }
 
   table.classList.add("projection-wheel");
   table.setAttribute("role", "button");
   table.setAttribute("tabindex", "0");
   table.setAttribute("aria-label", "Open projection focus view");
+
+  startAutoplay(table);
 
   if (table.dataset.focusReady === "true") return;
 
@@ -52,6 +59,36 @@ function setupProjectionCard(table: HTMLElement): void {
       if (currentItems.length > 0) openProjectionFocus(currentItems);
     }
   });
+}
+
+function startAutoplay(table: HTMLElement): void {
+  if (prefersReducedMotion()) return;
+  if (autoplayTimers.has(table)) return;
+
+  const timer = window.setInterval(() => {
+    if (!document.body.contains(table)) {
+      restartAutoplay(table);
+      return;
+    }
+
+    const rows = Array.from(table.querySelectorAll<HTMLElement>(".projection-row"));
+    if (rows.length <= 1) return;
+
+    const currentIndex = clamp(Number(table.dataset.projectionActiveIndex ?? 0), 0, rows.length - 1);
+    const nextIndex = (currentIndex + 1) % rows.length;
+    setActiveRow(rows, nextIndex, currentIndex);
+    table.dataset.projectionActiveIndex = String(nextIndex);
+  }, AUTOPLAY_INTERVAL_MS);
+
+  autoplayTimers.set(table, timer);
+}
+
+function restartAutoplay(table: HTMLElement): void {
+  const timer = autoplayTimers.get(table);
+  if (timer !== undefined) {
+    window.clearInterval(timer);
+    autoplayTimers.delete(table);
+  }
 }
 
 function openProjectionFocus(items: ProjectionItem[]): void {
@@ -203,11 +240,19 @@ function buildProjectionSignature(items: ProjectionItem[]): string {
   return items.map((item) => `${item.week}:${item.weight}`).join("|");
 }
 
-function setActiveRow(rows: HTMLElement[], activeIndex: number): void {
+function setActiveRow(rows: HTMLElement[], activeIndex: number, previousIndex?: number): void {
   rows.forEach((row, index) => {
+    row.classList.remove("is-entering", "is-exiting");
+
     const isActive = index === activeIndex;
+    const isPrevious = previousIndex !== undefined && index === previousIndex && index !== activeIndex;
+
     row.classList.toggle("is-active", isActive);
+    row.classList.toggle("is-exiting", isPrevious);
     row.setAttribute("aria-hidden", isActive ? "false" : "true");
+
+    if (isActive && previousIndex !== undefined) row.classList.add("is-entering");
+    if (isPrevious) window.setTimeout(() => row.classList.remove("is-exiting"), EXIT_CLASS_CLEAR_MS);
   });
 }
 
