@@ -172,34 +172,146 @@ body {
 
 .exercise-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px 12px;
   align-items: center;
   padding: 11px 0;
   border-bottom: 1px solid var(--border);
 }
 
+.exercise-row.has-gif {
+  grid-template-columns: minmax(0, 1fr) 86px;
+}
+
 .exercise-row:last-child {
   border-bottom: 0;
+}
+
+.exercise-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
 }
 
 .exercise-row strong {
   font-size: 14px;
 }
 
-.exercise-row span {
-  justify-self: end;
+.exercise-prescription {
+  justify-self: start;
   color: var(--text);
   font-size: 13px;
   font-weight: 850;
 }
 
-.exercise-row em {
-  grid-column: 1 / -1;
+.exercise-copy em {
   color: var(--muted);
   font-size: 12px;
   font-style: normal;
   line-height: 1.4;
+}
+
+.exercise-gif-button {
+  width: 86px;
+  height: 62px;
+  padding: 0;
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #f5f5f7;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 7px 18px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+}
+
+.exercise-gif-button:active {
+  transform: scale(0.98);
+}
+
+.exercise-gif-button.is-hidden {
+  display: none;
+}
+
+.exercise-gif-button img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.workout-gif-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+}
+
+.workout-gif-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(20px);
+}
+
+.workout-gif-modal {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 34px;
+  background: rgba(247, 247, 249, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  box-shadow: 0 28px 76px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(22px) saturate(1.2);
+}
+
+.workout-gif-close {
+  justify-self: end;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(17, 17, 17, 0.88);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.workout-gif-frame {
+  border-radius: 28px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.workout-gif-frame img {
+  display: block;
+  width: 100%;
+  max-height: min(58vh, 360px);
+  object-fit: contain;
+  background: #ffffff;
+}
+
+.workout-gif-caption {
+  display: grid;
+  gap: 4px;
+  padding: 0 6px 4px;
+}
+
+.workout-gif-caption strong {
+  font-size: 17px;
+  letter-spacing: -0.03em;
+}
+
+.workout-gif-caption span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
 }
 
 .workout-selector-overlay {
@@ -309,11 +421,21 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .exercise-row {
-    grid-template-columns: 1fr;
+  .exercise-row.has-gif {
+    grid-template-columns: minmax(0, 1fr) 78px;
   }
 
-  .exercise-row span {
-    justify-self: start;
+  .exercise-gif-button {
+    width: 78px;
+    height: 58px;
+    border-radius: 16px;
+  }
+
+  .workout-gif-overlay {
+    padding: 16px;
+  }
+
+  .workout-gif-modal {
+    border-radius: 30px;
   }
 }
