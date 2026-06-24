@@ -28,6 +28,12 @@ interface ActiveDrag {
   moved: boolean;
 }
 
+interface SelectedBuilderGif {
+  title: string;
+  gifUrl: string;
+  sourceName: string;
+}
+
 const copy = {
   en: {
     title: "Custom Plan",
@@ -38,7 +44,9 @@ const copy = {
     reps: "reps",
     loading: "Loading exercises...",
     empty: "No exercises found",
-    back: "Back"
+    back: "Back",
+    viewExercise: "View exercise animation",
+    close: "Close"
   },
   zh: {
     title: "自定义计划",
@@ -49,7 +57,9 @@ const copy = {
     reps: "次",
     loading: "正在加载动作...",
     empty: "没有找到动作",
-    back: "返回"
+    back: "返回",
+    viewExercise: "查看动作动图",
+    close: "关闭"
   }
 } as const;
 
@@ -69,6 +79,7 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
   const [catalog, setCatalog] = useState<Record<string, CustomCatalogExercise[]>>({});
   const [loadingMuscle, setLoadingMuscle] = useState<string | null>(null);
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
+  const [selectedGif, setSelectedGif] = useState<SelectedBuilderGif | null>(null);
 
   const activeDay = activeDayIndex === null ? null : draft.days[activeDayIndex];
 
@@ -119,14 +130,18 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
       setActiveDrag(null);
     }
 
+    function handlePointerCancel() {
+      setActiveDrag(null);
+    }
+
     window.addEventListener("pointermove", handlePointerMove, { passive: false });
     window.addEventListener("pointerup", handlePointerUp, { passive: false });
-    window.addEventListener("pointercancel", () => setActiveDrag(null));
+    window.addEventListener("pointercancel", handlePointerCancel);
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
-      window.removeEventListener("pointercancel", () => setActiveDrag(null));
+      window.removeEventListener("pointercancel", handlePointerCancel);
     };
   }, [Boolean(activeDrag), activeDayIndex, sets, reps]);
 
@@ -154,6 +169,7 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
   }
 
   function removeExerciseFromDay(dayIndex: number, exerciseIndex: number) {
+    if (activeDayIndex === null) return;
     setDraft((current) => ({
       ...current,
       days: current.days.map((day, index) => index === dayIndex ? { ...day, exercises: day.exercises.filter((_, itemIndex) => itemIndex !== exerciseIndex) } : day)
@@ -165,16 +181,27 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
     setActiveDrag({ exercise, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, moved: false });
   }
 
+  function handleBack() {
+    if (activeDayIndex !== null) {
+      setActiveDayIndex(null);
+      setActiveDrag(null);
+      setSelectedGif(null);
+      return;
+    }
+
+    onBack();
+  }
+
   return (
     <div className="custom-workout-builder-overlay" role="dialog" aria-modal="true" aria-label={t.title}>
       <section className={`custom-workout-builder-modal ${activeDayIndex !== null ? "is-editing" : ""}`}>
-        <div className="custom-builder-head">
-          <button aria-label={t.back} className="custom-builder-back" onClick={onBack} type="button">←</button>
+        <div className={`custom-builder-head ${activeDayIndex !== null ? "is-editing" : ""}`}>
+          <button aria-label={t.back} className="custom-builder-back" onClick={handleBack} type="button">←</button>
           <div>
             <strong>{t.title}</strong>
             <span>{t.subtitle}</span>
           </div>
-          <button className="custom-builder-done" onClick={() => onSave(draft)} type="button">{t.done}</button>
+          {activeDayIndex === null && <button className="custom-builder-done" onClick={() => onSave(draft)} type="button">{t.done}</button>}
         </div>
 
         <div className="custom-builder-week">
@@ -194,7 +221,13 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
                 </div>
                 <div className="custom-builder-day-pills">
                   {day.exercises.map((exercise, exerciseIndex) => (
-                    <span key={`${day.day}-${exercise.name}-${exerciseIndex}`} onClick={(event) => { event.stopPropagation(); removeExerciseFromDay(dayIndex, exerciseIndex); }}>{exercise.name}</span>
+                    <span
+                      className={activeDayIndex !== null ? "removable" : ""}
+                      key={`${day.day}-${exercise.name}-${exerciseIndex}`}
+                      onClick={activeDayIndex !== null ? (event) => { event.stopPropagation(); removeExerciseFromDay(dayIndex, exerciseIndex); } : undefined}
+                    >
+                      {exercise.name}
+                    </span>
                   ))}
                 </div>
               </button>
@@ -215,8 +248,8 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
               {loadingMuscle === activeMuscle && <div className="custom-builder-empty">{t.loading}</div>}
               {loadingMuscle !== activeMuscle && exercises.length === 0 && <div className="custom-builder-empty">{t.empty}</div>}
               {loadingMuscle !== activeMuscle && exercises.slice(0, 80).map((exercise) => (
-                <div className="custom-exercise-result exercise-row has-gif" key={exercise.id} onDoubleClick={() => addExerciseToDay(activeDayIndex, exercise)} onPointerDown={(event) => startDrag(event, exercise)}>
-                  <div className="exercise-copy">
+                <div className="custom-exercise-result exercise-row has-gif" key={exercise.id}>
+                  <div className="exercise-copy custom-exercise-drag-zone" onDoubleClick={() => addExerciseToDay(activeDayIndex, exercise)} onPointerDown={(event) => startDrag(event, exercise)}>
                     <strong>{exercise.name}</strong>
                     <div className="custom-prescription-capsules" onPointerDown={(event) => event.stopPropagation()}>
                       <label>
@@ -233,9 +266,14 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
                       </label>
                     </div>
                   </div>
-                  <div className="exercise-gif-button custom-exercise-gif">
+                  <button
+                    aria-label={`${t.viewExercise}: ${exercise.name}`}
+                    className="exercise-gif-button custom-exercise-gif"
+                    onClick={() => setSelectedGif({ title: exercise.name, gifUrl: exercise.gifUrl, sourceName: exercise.name })}
+                    type="button"
+                  >
                     <img alt="" loading="lazy" src={exercise.thumbUrl ?? exercise.gifUrl} />
-                  </div>
+                  </button>
                 </div>
               ))}
             </div>
@@ -244,6 +282,23 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
       </section>
 
       {activeDrag && activeDrag.moved && <div className="custom-exercise-floating" style={{ transform: `translate3d(${activeDrag.x}px, ${activeDrag.y}px, 0)` }}>{activeDrag.exercise.name}</div>}
+      {selectedGif && <CustomBuilderGifOverlay gif={selectedGif} labels={t} onClose={() => setSelectedGif(null)} />}
+    </div>
+  );
+}
+
+function CustomBuilderGifOverlay({ gif, labels, onClose }: { gif: SelectedBuilderGif; labels: typeof copy.en | typeof copy.zh; onClose: () => void }) {
+  return (
+    <div className="custom-builder-gif-overlay" role="dialog" aria-modal="true" aria-label={gif.title}>
+      <button className="custom-builder-gif-backdrop" type="button" aria-label={labels.close} onClick={onClose} />
+      <section className="custom-builder-gif-modal">
+        <div className="workout-gif-frame">
+          <img src={gif.gifUrl} alt={gif.sourceName} />
+        </div>
+        <div className="workout-gif-caption">
+          <strong>{gif.title}</strong>
+        </div>
+      </section>
     </div>
   );
 }
