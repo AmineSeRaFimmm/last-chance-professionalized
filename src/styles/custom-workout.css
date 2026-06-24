@@ -133,8 +133,8 @@
   flex-wrap: wrap;
 }
 
-.custom-builder-day-pills span {
-  max-width: 150px;
+.custom-builder-day-pills > span {
+  max-width: 170px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -145,8 +145,25 @@
   font-weight: 850;
 }
 
-.custom-builder-day-pills span.removable {
+.custom-builder-day-pills > span b {
+  display: inline-grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  margin-right: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.custom-builder-day-pills > span.removable {
   cursor: pointer;
+}
+
+.custom-builder-day-pills > span.sortable {
+  touch-action: none;
+  cursor: grab;
 }
 
 .custom-builder-exercise-panel {
