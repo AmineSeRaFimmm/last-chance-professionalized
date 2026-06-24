@@ -264,7 +264,7 @@ export function WorkoutPlanner() {
       </section>
 
       <div className="workout-week-stack">
-        {plan.days.map((day) => <WorkoutDayCard day={day} labels={t} language={language} onOpenGif={setSelectedGif} key={day.day} />)}
+        {plan.days.map((day) => <WorkoutDayCard day={day} labels={t} language={language} onOpenGif={setSelectedGif} hideIntentIntensity={Boolean(customPlan)} key={day.day} />)}
       </div>
 
       {selectorOpen && (
@@ -307,7 +307,7 @@ export function WorkoutPlanner() {
   );
 }
 
-function WorkoutDayCard({ day, labels, language, onOpenGif }: { day: WorkoutDay; labels: typeof copy.en | typeof copy.zh; language: Language; onOpenGif: (gif: SelectedWorkoutGif) => void }) {
+function WorkoutDayCard({ day, labels, language, onOpenGif, hideIntentIntensity }: { day: WorkoutDay; labels: typeof copy.en | typeof copy.zh; language: Language; onOpenGif: (gif: SelectedWorkoutGif) => void; hideIntentIntensity: boolean }) {
   return (
     <section className="card workout-day-card">
       <div className="workout-day-head">
@@ -318,10 +318,12 @@ function WorkoutDayCard({ day, labels, language, onOpenGif }: { day: WorkoutDay;
         </div>
       </div>
 
-      <div className="workout-intent-grid">
-        <div><span>{labels.intent}</span>{" "}<strong>{tr(day.intent, language)}</strong></div>
-        <div><span>{labels.intensity}</span>{" "}<strong>{day.intensity}</strong></div>
-      </div>
+      {!hideIntentIntensity && (
+        <div className="workout-intent-grid">
+          <div><span>{labels.intent}</span>{" "}<strong>{tr(day.intent, language)}</strong></div>
+          <div><span>{labels.intensity}</span>{" "}<strong>{day.intensity}</strong></div>
+        </div>
+      )}
 
       <div className="exercise-stack">
         {day.exercises.map((exercise) => (
