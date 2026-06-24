@@ -56,7 +56,7 @@ interface LastPillTap {
 const copy = {
   en: {
     title: "Custom Plan",
-    subtitle: "创建自己的专业周训练计划",
+    subtitle: "Create your own professional weekly training plan",
     done: "Done",
     search: "Search exercises",
     sets: "sets",
