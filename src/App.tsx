@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import CarbCyclingWeeklyStructure from "./components/CarbCyclingWeeklyStructure";
+import { PlanChoiceCard } from "./components/PlanChoiceCard";
 import { OptionalPlanPickerField, PlanPickerField } from "./components/PlanPickerField";
 import type { MacroResult, PlanResult, PlanType, Sex, UserInput } from "./core/types";
 import { buildSafeCarbCyclingPlan as buildCarbCyclingPlan } from "./core/carbCyclingSafePlan";
@@ -39,9 +40,13 @@ const copy = {
     sex: "Sex",
     male: "Male",
     female: "Female",
+    maleChoice: "Training-led setup",
+    femaleChoice: "Recovery-aware setup",
     plan: "Plan",
     standard: "Standard",
     carbCycling: "Carb Cycling",
+    standardChoice: "Stable daily calories",
+    carbChoice: "Carbs around hard sessions",
     carbNote:
       "Carb cycling keeps the weekly deficit fixed and shifts carbohydrates toward the hardest resistance-training days.",
     bodyData: "Body data",
@@ -100,8 +105,8 @@ const copy = {
     buildFirst: "Build your plan first",
     buildFirstDetail: "Start with the essential data. The app will not show default personal numbers before you save a real plan.",
     startSetup: "Start setup",
-    setupHeader: "Plan setup",
-    setupSubhead: "Set the core inputs, review the safety status, then save the plan locally.",
+    setupHeader: "Set your baseline",
+    setupSubhead: "Choose your plan style and tune the key numbers before saving locally.",
     stepBody: "Body data",
     stepGoal: "Goal weight",
     stepTimeline: "Timeline",
@@ -118,9 +123,13 @@ const copy = {
     sex: "性别",
     male: "男士",
     female: "女士",
+    maleChoice: "训练导向设置",
+    femaleChoice: "恢复优先设置",
     plan: "方案",
     standard: "标准减脂",
     carbCycling: "碳水循环",
+    standardChoice: "每天热量更稳定",
+    carbChoice: "围绕高强度训练分配碳水",
     carbNote: "碳水循环保持每周总赤字不变，只把更多碳水分配给最难的力量训练日。",
     bodyData: "身体数据",
     age: "年龄",
@@ -173,8 +182,8 @@ const copy = {
     buildFirst: "先建立你的计划",
     buildFirstDetail: "先填写关键数据。保存真实计划之前，App 不展示默认个人数字。",
     startSetup: "开始设置",
-    setupHeader: "计划设置",
-    setupSubhead: "设置核心输入，检查安全状态，然后保存到本机。",
+    setupHeader: "建立基础数据",
+    setupSubhead: "先选择方案风格，再微调关键数据后保存到本机。",
     stepBody: "身体数据",
     stepGoal: "目标体重",
     stepTimeline: "完成周期",
@@ -265,24 +274,33 @@ export default function App() {
 
   const setupForm = (
     <>
-      <section className="card plan-settings-card">
+      <section className="card plan-settings-card plan-choice-section">
         <div className="card-title">{t.sex}</div>
-        <div className="segmented two">
-          <button className={sex === "male" ? "active" : ""} onClick={() => handleSexChange("male")} type="button">{t.male}</button>
-          <button className={sex === "female" ? "active" : ""} onClick={() => handleSexChange("female")} type="button">{t.female}</button>
+        <div className="choice-card-grid two">
+          <PlanChoiceCard title={t.male} subtitle={t.maleChoice} active={sex === "male"} onSelect={() => handleSexChange("male")} />
+          <PlanChoiceCard title={t.female} subtitle={t.femaleChoice} active={sex === "female"} onSelect={() => handleSexChange("female")} />
         </div>
       </section>
 
       {sex === "male" && (
-        <section className="card plan-settings-card">
+        <section className="card plan-settings-card plan-choice-section">
           <div className="card-title">{t.plan}</div>
-          <div className="segmented two">
-            <button className={planType === "standard" ? "active" : ""} onClick={() => setPlanType("standard")} type="button">{t.standard}</button>
-            <button className={planType === "carbCycling" ? "active" : ""} onClick={() => setPlanType("carbCycling")} type="button">{t.carbCycling}</button>
+          <div className="choice-card-grid two">
+            <PlanChoiceCard title={t.standard} subtitle={t.standardChoice} active={planType === "standard"} onSelect={() => setPlanType("standard")} />
+            <PlanChoiceCard title={t.carbCycling} subtitle={t.carbChoice} active={planType === "carbCycling"} onSelect={() => setPlanType("carbCycling")} />
           </div>
           <p className="small-note">{t.carbNote}</p>
         </section>
       )}
+
+      <section className="card plan-settings-card plan-choice-section">
+        <div className="card-title">{t.activity}</div>
+        <div className="choice-card-grid two">
+          {ACTIVITY_LEVELS.map((level) => (
+            <PlanChoiceCard key={level.value} title={level.label} subtitle={level.description} active={activityFactor === level.value} onSelect={() => setActivityFactor(level.value)} />
+          ))}
+        </div>
+      </section>
 
       <section className="card plan-body-data-card plan-settings-card">
         <div className="card-title">{t.bodyData}</div>
@@ -292,14 +310,6 @@ export default function App() {
           <PlanPickerField label={t.weight} value={weightKg} min={35} max={250} step={0.1} suffix="kg" onChange={setWeightKg} />
           <OptionalPlanPickerField label={t.target} value={targetWeightKg} defaultValue={Math.max(35, Math.min(250, Number((weightKg - 5).toFixed(1))))} min={35} max={250} step={0.1} suffix="kg" setLabel={language === "zh" ? "设置目标" : "Set target"} clearLabel={language === "zh" ? "清除" : "Clear"} emptyLabel={language === "zh" ? "未设置" : "Not set"} onChange={setTargetWeightKg} />
           <PlanPickerField label={t.expectedTimeline} value={expectedTimelineWeeks} min={MIN_TIMELINE_WEEKS} max={MAX_TIMELINE_WEEKS} suffix="wk" onChange={setExpectedTimelineWeeks} />
-          <div className="field">
-            <label>{t.activity}</label>
-            <select value={activityFactor} onChange={(event) => setActivityFactor(Number(event.target.value))}>
-              {ACTIVITY_LEVELS.map((level) => (
-                <option key={level.value} value={level.value}>{level.label} · {level.description}</option>
-              ))}
-            </select>
-          </div>
           <PlanPickerField label={t.trainingDays} value={trainingDaysPerWeek} min={0} max={6} suffix="/wk" onChange={setTrainingDaysPerWeek} />
           <PlanPickerField label={t.protein} value={proteinFactor} min={1.4} max={2.4} step={0.1} suffix="g/kg" onChange={setProteinFactor} />
         </div>
@@ -389,7 +399,6 @@ export default function App() {
             {setupStage === "intro" ? (
               <div className="plan-sheet-intro">
                 <div className="card plan-start-card">
-                  <div className="card-title">{t.result}</div>
                   <h2>{t.buildFirst}</h2>
                   <p>{t.buildFirstDetail}</p>
                   <div className="setup-step-grid">
@@ -402,18 +411,12 @@ export default function App() {
               </div>
             ) : (
               <div className="plan-sheet-form">
-                <div className="plan-sheet-head">
+                <div className="plan-sheet-head compact">
                   <div>
-                    <div className="card-title">{t.setupHeader}</div>
                     <strong>{t.setupHeader}</strong>
                     <span>{t.setupSubhead}</span>
                   </div>
                   {hasSavedPlan && <button type="button" onClick={() => setSetupOpen(false)}>{t.close}</button>}
-                </div>
-                <div className="plan-setup-progress" aria-hidden="true">
-                  <span>{t.sex}</span>
-                  <span>{t.plan}</span>
-                  <span>{t.bodyData}</span>
                 </div>
                 <div className="plan-sheet-body">
                   {setupForm}
@@ -490,7 +493,7 @@ function MacroBlock({ title, data, labels }: { title: string; data: MacroResult;
 }
 
 function WeeklyCalorieCheck({ result, labels }: { result: Extract<PlanResult, { kind: "carbCycling" }>; labels: typeof copy.en | typeof copy.zh }) {
-  const allocated = result.highDay.calories * result.dayCounts.high + result.mediumDay.calories * result.dayCounts.medium + result.lowDay.calories * result.dayCounts.low;
+  const allocated = result.highDay.calories * result.dayCounts.high + result.dayCounts.medium * result.mediumDay.calories + result.lowDay.calories * result.dayCounts.low;
   const difference = allocated - result.weeklyCalories;
 
   return (
