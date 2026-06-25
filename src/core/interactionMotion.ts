@@ -6,8 +6,10 @@ const CLOSE_TRIGGER_SELECTOR = [
   ".workout-selector-backdrop",
   ".workout-selector-head button",
   ".workout-selector-modal .program-option:not(.custom-plan-option)",
+  ".custom-builder-back",
   ".custom-builder-done",
-  ".meal-composer-backdrop"
+  ".meal-composer-backdrop",
+  ".meal-composer-actions .primary-button:not(:disabled)"
 ].join(", ");
 
 let started = false;
@@ -51,6 +53,8 @@ function interceptCloseClick(event: MouseEvent): void {
   const overlay = trigger.closest(OVERLAY_SELECTOR);
   if (!(overlay instanceof HTMLElement)) return;
   if (overlay.dataset.motionState === "exit") return;
+
+  if (trigger.matches(".custom-builder-back") && overlay.querySelector(".custom-workout-builder-modal.is-editing")) return;
 
   event.preventDefault();
   event.stopPropagation();
