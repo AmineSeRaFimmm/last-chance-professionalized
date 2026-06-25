@@ -99,7 +99,7 @@
 }
 
 .plan-dashboard-ready .plan-body-data-card .timeline-risk-panel,
-.plan-dashboard-ready .plan-settings-card {
+.plan-dashboard-ready .app-shell > .plan-settings-card {
   display: none;
 }
 
@@ -198,9 +198,15 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.plan-sheet-body .card {
+.plan-sheet-body .card,
+.plan-sheet-body .plan-settings-card {
+  display: block;
   margin: 0 0 12px;
   box-shadow: none;
+}
+
+.plan-sheet-body .timeline-risk-panel {
+  display: grid;
 }
 
 .plan-sheet-footer {
