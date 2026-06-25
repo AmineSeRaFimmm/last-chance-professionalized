@@ -13,7 +13,9 @@ import "./styles/diet.css";
 import "./styles/timeline.css";
 import "./styles/weekly-structure.css";
 import "./styles/motion.css";
+import "./styles/plan-home.css";
 import "./core/interactionMotion";
+import "./core/planHomeExperience";
 
 installNumericInputGuard();
 installProjectionWheel();
