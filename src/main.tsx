@@ -13,6 +13,7 @@ import "./styles/diet.css";
 import "./styles/timeline.css";
 import "./styles/weekly-structure.css";
 import "./styles/motion.css";
+import "./core/interactionMotion";
 
 installNumericInputGuard();
 installProjectionWheel();
