@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import Root from "./Root";
+import "./core/interactionMotion";
 import { installNumericInputGuard } from "./core/numericInputGuard";
 import { installProjectionWheel } from "./core/projectionWheel";
 import { startStartupGifPreload } from "./core/startupGifPreloader";
