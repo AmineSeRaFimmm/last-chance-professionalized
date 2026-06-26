@@ -41,6 +41,29 @@
   scroll-snap-stop: always;
 }
 
+.diet-info-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 260px;
+}
+
+.diet-info-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.diet-info-line {
+  border-radius: 17px;
+  padding: 11px 12px;
+  background: #f5f5f7;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
 .diet-day-head {
   display: flex;
   justify-content: space-between;
