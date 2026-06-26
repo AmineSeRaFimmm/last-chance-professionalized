@@ -12,11 +12,32 @@
 
 .diet-week-stack {
   display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, min(84vw, 430px));
   gap: 14px;
+  width: 100%;
+  margin-top: 2px;
+  margin-inline: 0;
+  padding-block: 2px 10px;
+  padding-inline: max(0px, calc((100% - min(84vw, 430px)) / 2));
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: max(0px, calc((100% - min(84vw, 430px)) / 2));
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.diet-week-stack::-webkit-scrollbar {
+  display: none;
 }
 
 .diet-day-card {
+  min-width: 0;
   overflow: hidden;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
 }
 
 .diet-day-head {
@@ -68,7 +89,7 @@
 
 .diet-meal-interactive {
   cursor: pointer;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
 }
 
 .diet-meal-head {
