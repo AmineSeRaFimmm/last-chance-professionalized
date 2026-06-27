@@ -1,0 +1,553 @@
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.section-head h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  font-weight: 880;
+}
+
+.section-head > span {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 8px 11px;
+  background: var(--surface);
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 860;
+}
+
+.plan-target-card {
+  background:
+    linear-gradient(155deg, rgba(16, 17, 20, 0.98), rgba(35, 39, 47, 0.96)),
+    #101114;
+  border-radius: 24px;
+}
+
+.plan-result-banner h2 {
+  font-size: 34px;
+  letter-spacing: -0.06em;
+}
+
+.plan-target-card .target-insight-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.plan-target-card .target-insight-grid div {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.macro-bars {
+  display: grid;
+  gap: 11px;
+  margin-top: 14px;
+}
+
+.macro-bar {
+  display: grid;
+  gap: 7px;
+}
+
+.macro-bar div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.macro-bar span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.macro-bar strong {
+  color: var(--muted-strong);
+  font-size: 13px;
+}
+
+.macro-bar i,
+.timeline-risk-track {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-strong);
+}
+
+.macro-bar i b,
+.timeline-risk-track b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.macro-bar.protein i b {
+  background: var(--protein);
+}
+
+.macro-bar.carbs i b {
+  background: var(--carbs);
+}
+
+.macro-bar.fat i b {
+  background: var(--fat);
+}
+
+.timeline-risk-panel {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(223, 227, 232, 0.8);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  background: var(--surface);
+}
+
+.timeline-risk-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.timeline-risk-head i {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 0 5px rgba(22, 163, 74, 0.12);
+}
+
+.timeline-risk-panel span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.timeline-risk-panel.safe .timeline-risk-track b {
+  width: 82%;
+  background: var(--green);
+}
+
+.timeline-risk-panel.standard .timeline-risk-track b {
+  width: 64%;
+  background: var(--green);
+}
+
+.timeline-risk-panel.aggressive .timeline-risk-track b,
+.timeline-risk-panel.high .timeline-risk-track b {
+  width: 46%;
+  background: var(--orange);
+}
+
+.timeline-risk-panel.blocked .timeline-risk-track b {
+  width: 28%;
+  background: var(--red);
+}
+
+.timeline-risk-panel.maintain .timeline-risk-track b,
+.timeline-risk-panel.empty .timeline-risk-track b {
+  width: 38%;
+  background: var(--blue);
+}
+
+.timeline-risk-panel.aggressive .timeline-risk-head i,
+.timeline-risk-panel.high .timeline-risk-head i {
+  background: var(--orange);
+  box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.14);
+}
+
+.timeline-risk-panel.blocked .timeline-risk-head i {
+  background: var(--red);
+  box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.14);
+}
+
+.projection-preview {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  align-items: end;
+  gap: 8px;
+  min-height: 96px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(223, 227, 232, 0.72);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  background: linear-gradient(180deg, #ffffff, var(--surface));
+}
+
+.projection-preview i {
+  display: block;
+  border-radius: 999px 999px 6px 6px;
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.36), rgba(37, 99, 235, 0.9));
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
+}
+
+@media (min-width: 900px) {
+  .app-shell.plan-shell,
+  .diet-shell,
+  .workout-shell,
+  .profile-shell {
+    max-width: 960px;
+  }
+
+  .plan-dashboard-stack {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+  }
+
+  .plan-dashboard-stack .plan-target-card,
+  .plan-dashboard-stack .plan-result-card,
+  .plan-dashboard-stack .plan-home-status-card,
+  .plan-dashboard-stack .reveal-4,
+  .plan-dashboard-stack .reveal-5,
+  .plan-dashboard-stack .reveal-6 {
+    grid-column: span 1;
+  }
+
+  .hero {
+    max-width: 720px;
+  }
+}
+
+@media (max-width: 520px) {
+  .profile-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-metric,
+  .progress-metric {
+    min-height: 74px;
+    border-radius: 16px;
+    padding: 11px;
+  }
+
+  .profile-metric span,
+  .progress-metric span {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .profile-metric strong,
+  .progress-metric strong {
+    font-size: 18px;
+    line-height: 1.05;
+  }
+
+  .progress-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .plan-target-card .target-insight-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .plan-target-card .target-insight-grid div {
+    border-radius: 14px;
+    padding: 10px 9px;
+  }
+
+  .plan-target-card .target-insight-grid span {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+
+  .plan-target-card .target-insight-grid strong {
+    font-size: 12px;
+    line-height: 1.15;
+  }
+
+  .section-head {
+    align-items: flex-start;
+  }
+}
+
+.plan-setup-lock .bottom-nav-shell {
+  display: none;
+}
+
+.card,
+.change-plan-button,
+.bottom-nav,
+.diet-day-card,
+.workout-day-card,
+.profile-summary-card,
+.progress-metric,
+.field input,
+.field select,
+.primary-button,
+.secondary-button {
+  transition:
+    border-color 180ms var(--ease-ios),
+    box-shadow 180ms var(--ease-ios),
+    transform 160ms var(--ease-press),
+    background 180ms var(--ease-ios);
+}
+
+.card:hover {
+  border-color: rgba(201, 206, 214, 0.9);
+}
+
+.primary-button,
+.change-plan-button {
+  background: linear-gradient(180deg, #17191d, #0d0e11);
+}
+
+.secondary-button {
+  border: 1px solid rgba(223, 227, 232, 0.9);
+  background: #ffffff;
+}
+
+.diet-note-card,
+.workout-program-card,
+.profile-summary-card,
+.tracker-source-card {
+  border-color: rgba(201, 206, 214, 0.72);
+}
+
+.diet-week-stack {
+  padding-inline: max(7%, calc((100vw - 560px) / 2 + 18px));
+  scroll-padding-inline: max(7%, calc((100vw - 560px) / 2 + 18px));
+}
+
+.diet-carousel-card {
+  flex: 0 0 min(84%, 430px);
+}
+
+.diet-day-card {
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96));
+}
+
+.diet-day-head {
+  align-items: flex-start;
+}
+
+.diet-day-head strong {
+  letter-spacing: -0.04em;
+}
+
+.diet-day-target {
+  border-radius: 14px;
+  padding: 8px 10px;
+  background: var(--surface);
+}
+
+.diet-meal {
+  border: 1px solid rgba(223, 227, 232, 0.76);
+  background: linear-gradient(180deg, #f7f8fa, #eff2f5);
+}
+
+.diet-meal-interactive:hover {
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.diet-food-list span {
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.035);
+}
+
+.diet-food-list span.protein {
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.diet-food-list span.carb {
+  color: #047857;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.diet-food-list span.fat {
+  color: #a16207;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.diet-total-line {
+  border-top-color: rgba(201, 206, 214, 0.72);
+}
+
+.workout-program-card {
+  background:
+    linear-gradient(155deg, rgba(16, 17, 20, 0.97), rgba(35, 39, 47, 0.96)),
+    #101114;
+  color: #ffffff;
+}
+
+.workout-program-card .card-title,
+.workout-program-card .small-note,
+.workout-program-card .program-best-for span {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.workout-program-card .program-best-for {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.principle-line,
+.workout-intent-grid > div,
+.workout-note-grid > div,
+.profile-metric,
+.progress-metric {
+  border: 1px solid rgba(223, 227, 232, 0.76);
+  background: linear-gradient(180deg, #f8fafc, #eef2f6);
+}
+
+.principle-line {
+  position: relative;
+  padding-left: 38px;
+}
+
+.principle-line::before {
+  content: "";
+  position: absolute;
+  top: 17px;
+  left: 16px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--blue);
+  box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.11);
+}
+
+.workout-day-card {
+  border-radius: 22px;
+}
+
+.workout-day-head strong {
+  font-size: 19px;
+}
+
+.workout-day-badges > span:not(.day-type) {
+  border: 1px solid rgba(223, 227, 232, 0.78);
+  background: var(--surface);
+}
+
+.exercise-row {
+  border-bottom-color: rgba(201, 206, 214, 0.58);
+}
+
+.exercise-row strong {
+  font-size: 15px;
+  letter-spacing: -0.015em;
+}
+
+.exercise-prescription {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+  font-size: 12px;
+}
+
+.exercise-gif-button {
+  border-radius: 14px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.09);
+}
+
+.profile-summary-card .card-title,
+.progress-shell .card-title {
+  margin-bottom: 4px;
+}
+
+.profile-metric-grid,
+.progress-grid {
+  gap: 12px;
+}
+
+.profile-metric,
+.progress-metric {
+  min-height: 86px;
+  justify-content: space-between;
+}
+
+.profile-metric strong,
+.progress-metric strong {
+  font-size: 21px;
+  letter-spacing: -0.04em;
+}
+
+.progress-verdict {
+  border: 1px solid rgba(223, 227, 232, 0.76);
+  background: var(--surface);
+}
+
+.progress-verdict.onTrack {
+  border-color: rgba(22, 163, 74, 0.18);
+  background: rgba(22, 163, 74, 0.1);
+  color: #166534;
+}
+
+.progress-verdict.slow,
+.progress-verdict.gain {
+  border-color: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.12);
+  color: #92400e;
+}
+
+.progress-verdict.fast {
+  border-color: rgba(37, 99, 235, 0.2);
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+.log-row {
+  border-bottom-color: rgba(201, 206, 214, 0.58);
+}
+
+.log-row button {
+  border: 1px solid rgba(223, 227, 232, 0.78);
+  background: #ffffff;
+}
+
+.workout-selector-modal,
+.meal-selected-card,
+.custom-workout-builder-modal,
+.workout-gif-modal {
+  border: 1px solid rgba(255, 255, 255, 0.76);
+  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.22);
+}
+
+@media (min-width: 900px) {
+  .diet-shell .diet-week-stack {
+    max-width: 960px;
+    margin-inline: auto;
+    padding-inline: 0;
+    scroll-padding-inline: 0;
+  }
+
+  .diet-carousel-card {
+    flex-basis: min(46%, 430px);
+  }
+
+  .workout-week-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-shell {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .profile-shell .profile-hero,
+  .profile-shell > section:last-child {
+    grid-column: 1 / -1;
+  }
+}

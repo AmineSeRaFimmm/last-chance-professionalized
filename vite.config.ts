@@ -3,39 +3,39 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  base: "/last-chance/",
+  base: "/last-chance-professionalized/",
   plugins: [
     react(),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["icon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "screenshot-mobile.svg"],
       manifest: {
-        id: "/last-chance/",
+        id: "/last-chance-professionalized/",
         name: "Last Chance",
         short_name: "Last Chance",
         description: "Evidence-based fat-loss planner",
-        theme_color: "#111111",
-        background_color: "#F5F5F7",
+        theme_color: "#101114",
+        background_color: "#F6F7F9",
         display: "standalone",
         orientation: "portrait",
-        start_url: "/last-chance/",
-        scope: "/last-chance/",
+        start_url: "/last-chance-professionalized/",
+        scope: "/last-chance-professionalized/",
         categories: ["health", "fitness", "lifestyle"],
         icons: [
           {
-            src: "/last-chance/icon-192.png",
+            src: "/last-chance-professionalized/icon-192.png",
             sizes: "192x192",
             type: "image/png",
             purpose: "any maskable"
           },
           {
-            src: "/last-chance/icon-512.png",
+            src: "/last-chance-professionalized/icon-512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any maskable"
           },
           {
-            src: "/last-chance/icon.svg",
+            src: "/last-chance-professionalized/icon.svg",
             sizes: "any",
             type: "image/svg+xml",
             purpose: "any maskable"
@@ -43,7 +43,7 @@ export default defineConfig({
         ],
         screenshots: [
           {
-            src: "/last-chance/screenshot-mobile.svg",
+            src: "/last-chance-professionalized/screenshot-mobile.svg",
             sizes: "390x844",
             type: "image/svg+xml",
             form_factor: "narrow"

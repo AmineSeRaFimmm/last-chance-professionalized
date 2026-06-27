@@ -237,20 +237,55 @@ export default function AppRef() {
       {hasSavedPlan && (
         <div className="plan-dashboard-stack">
           <section className="card accent-card plan-target-card dashboard-reveal reveal-1">
-            <div className="plan-result-banner"><div><div className="card-title">{t.coreTarget}</div><h2>{coreCalories}</h2><p>{t.readyDetail}</p></div><span>{t.readyBadge}</span></div>
+            <div className="plan-result-banner">
+              <div>
+                <div className="card-title">{t.coreTarget}</div>
+                <h2>{coreCalories}</h2>
+                <p>{t.readyDetail}</p>
+              </div>
+              <span>{t.readyBadge}</span>
+            </div>
             <div className="target-insight-grid">
-              <div><span>{t.planStyle}</span><strong>{effectivePlanType === "carbCycling" ? t.carbCycling : t.standard}</strong></div>
-              <div><span>{t.proteinShort}</span><strong>{result.kind === "standard" ? `${result.daily.proteinG} g` : `${result.highDay.proteinG} g`}</strong></div>
-              <div><span>{t.expectedLoss}</span><strong>{result.weeklyLossKg} kg/week</strong></div>
+              <InsightMetric label={t.planStyle} value={effectivePlanType === "carbCycling" ? t.carbCycling : t.standard} />
+              <InsightMetric label={t.proteinShort} value={result.kind === "standard" ? `${result.daily.proteinG} g` : `${result.highDay.proteinG} g`} />
+              <InsightMetric label={t.expectedLoss} value={`${result.weeklyLossKg} kg/week`} />
             </div>
           </section>
           <section className="card accent-card plan-result-card dashboard-reveal reveal-2">
-            <div className="card-title">{t.result}</div>
-            {result.kind === "standard" ? <MacroGrid data={result.daily} labels={t} /> : <div className="cycle-stack"><MacroBlock title={t.high} data={result.highDay} labels={t} /><MacroBlock title={t.medium} data={result.mediumDay} labels={t} /><MacroBlock title={t.low} data={result.lowDay} labels={t} /></div>}
+            <div className="section-head">
+              <div>
+                <div className="card-title">{t.result}</div>
+                <h2>{result.kind === "standard" ? t.standard : t.carbCycling}</h2>
+              </div>
+              <span>{result.kind === "standard" ? `${result.daily.calories} kcal` : `${result.weeklyCalories} kcal/week`}</span>
+            </div>
+            {result.kind === "standard" ? (
+              <>
+                <MacroGrid data={result.daily} labels={t} />
+                <MacroBars data={result.daily} labels={t} />
+              </>
+            ) : (
+              <div className="cycle-stack">
+                <MacroBlock title={t.high} data={result.highDay} labels={t} />
+                <MacroBlock title={t.medium} data={result.mediumDay} labels={t} />
+                <MacroBlock title={t.low} data={result.lowDay} labels={t} />
+              </div>
+            )}
             <div className="summary-line"><span>RMR {result.rmr} kcal</span><span>TDEE {result.tdee} kcal</span><span>{t.expectedLoss} {result.weeklyLossKg} kg/week</span></div>
           </section>
           <section className="card plan-home-status-card dashboard-reveal reveal-3"><div className="card-title">{t.status}</div><TimelineRiskPanel risk={timelineRisk} /></section>
-          <section className="card dashboard-reveal reveal-4"><div className="card-title">{t.projection}</div><div className="projection-table">{projection.map((row) => <div className="projection-row" key={row.week}><span>{t.week} {row.week}</span><strong>{row.weightKg.toFixed(2)} kg</strong></div>)}</div><p className="small-note">{t.projectionNote}</p></section>
+          <section className="card dashboard-reveal reveal-4">
+            <div className="section-head">
+              <div>
+                <div className="card-title">{t.projection}</div>
+                <h2>{targetLabel}</h2>
+              </div>
+              <span>{expectedTimelineWeeks} wk</span>
+            </div>
+            <ProjectionPreview rows={projection.slice(0, 8)} />
+            <div className="projection-table">{projection.slice(0, 6).map((row) => <div className="projection-row" key={row.week}><span>{t.week} {row.week}</span><strong>{row.weightKg.toFixed(2)} kg</strong></div>)}</div>
+            <p className="small-note">{t.projectionNote}</p>
+          </section>
           <section className="card dashboard-reveal reveal-5"><div className="card-title">{t.execution}</div><p className="small-note">{sex === "female" ? t.femaleRules : result.kind === "carbCycling" ? t.carbRules : t.standardRules}</p></section>
           {result.warnings.length > 0 && <section className="card dashboard-reveal reveal-6"><div className="card-title">{t.safety}</div>{result.warnings.map((warning) => <div className="warning" key={warning}>{warning}</div>)}</section>}
         </div>
@@ -283,7 +318,17 @@ export default function AppRef() {
 }
 
 function TimelineRiskPanel({ risk }: { risk: TimelineRisk }) {
-  return <div className={`timeline-risk-panel ${risk.status}`}><strong>{risk.title}</strong><span>{risk.detail}</span></div>;
+  return (
+    <div className={`timeline-risk-panel ${risk.status}`}>
+      <div className="timeline-risk-head"><i aria-hidden="true" /><strong>{risk.title}</strong></div>
+      <span>{risk.detail}</span>
+      <div className="timeline-risk-track" aria-hidden="true"><b /></div>
+    </div>
+  );
+}
+
+function InsightMetric({ label, value }: { label: string; value: string }) {
+  return <div><span>{label}</span><strong>{value}</strong></div>;
 }
 
 function Metric({ label, value, unit }: { label: string; value: number; unit: string }) {
@@ -295,7 +340,47 @@ function MacroGrid({ data, labels }: { data: MacroResult; labels: AppCopy }) {
 }
 
 function MacroBlock({ title, data, labels }: { title: string; data: MacroResult; labels: AppCopy }) {
-  return <div className="macro-block"><h3>{title}</h3><MacroGrid data={data} labels={labels} /></div>;
+  return <div className="macro-block"><h3>{title}</h3><MacroGrid data={data} labels={labels} /><MacroBars data={data} labels={labels} /></div>;
+}
+
+function MacroBars({ data, labels }: { data: MacroResult; labels: AppCopy }) {
+  const proteinCalories = data.proteinG * 4;
+  const fatCalories = data.fatG * 9;
+  const carbCalories = data.carbsG * 4;
+  const total = Math.max(1, proteinCalories + fatCalories + carbCalories);
+  const bars = [
+    { label: labels.proteinShort, value: data.proteinG, unit: "g", color: "protein", percent: (proteinCalories / total) * 100 },
+    { label: labels.carbs, value: data.carbsG, unit: "g", color: "carbs", percent: (carbCalories / total) * 100 },
+    { label: labels.fat, value: data.fatG, unit: "g", color: "fat", percent: (fatCalories / total) * 100 }
+  ];
+
+  return (
+    <div className="macro-bars">
+      {bars.map((bar) => (
+        <div className={`macro-bar ${bar.color}`} key={bar.label}>
+          <div><span>{bar.label}</span><strong>{bar.value}{bar.unit}</strong></div>
+          <i aria-hidden="true"><b style={{ width: `${bar.percent}%` }} /></i>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProjectionPreview({ rows }: { rows: Array<{ week: number; weightKg: number }> }) {
+  if (rows.length === 0) return null;
+  const weights = rows.map((row) => row.weightKg);
+  const max = Math.max(...weights);
+  const min = Math.min(...weights);
+  const range = Math.max(0.1, max - min);
+
+  return (
+    <div className="projection-preview" aria-hidden="true">
+      {rows.map((row) => {
+        const height = 26 + ((row.weightKg - min) / range) * 58;
+        return <i key={row.week} style={{ height: `${height}px` }} />;
+      })}
+    </div>
+  );
 }
 
 function buildTimelineRisk(currentWeightKg: number, targetWeightKg: number | undefined, expectedTimelineWeeks: number, labels: AppCopy): TimelineRisk {

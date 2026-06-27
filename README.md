@@ -95,7 +95,7 @@ Settings → Pages → Build and deployment → Source: GitHub Actions
 The expected project URL is:
 
 ```text
-https://AmineSeRaFimmm.github.io/last-chance/
+https://AmineSeRaFimmm.github.io/last-chance-professionalized/
 ```
 
 ## PWA note

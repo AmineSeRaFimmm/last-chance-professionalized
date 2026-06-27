@@ -18,6 +18,7 @@ import "./styles/plan-home.css";
 import "./styles/plan-setup-polish.css";
 import "./styles/plan-picker.css";
 import "./styles/plan-stage-dashboard.css";
+import "./styles/professional-ui.css";
 import "./core/interactionMotion";
 
 installNumericInputGuard();

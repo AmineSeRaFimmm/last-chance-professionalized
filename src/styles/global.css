@@ -1,20 +1,33 @@
 :root {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
-  color: #111111;
-  background: #f5f5f7;
+  color: #101114;
+  background: #f6f7f9;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --bg: #f5f5f7;
+  --bg: #f6f7f9;
   --card: #ffffff;
-  --text: #111111;
-  --muted: #6e6e73;
-  --border: #e5e5ea;
-  --accent: #111111;
-  --blue: #007aff;
-  --green: #34c759;
-  --orange: #ff9500;
-  --red: #ff3b30;
+  --surface: #f0f2f5;
+  --surface-strong: #e8ebef;
+  --text: #101114;
+  --muted: #6b707a;
+  --muted-strong: #4f5560;
+  --border: #dfe3e8;
+  --border-strong: #c9ced6;
+  --accent: #101114;
+  --blue: #2563eb;
+  --green: #16a34a;
+  --orange: #f59e0b;
+  --red: #ef4444;
+  --protein: #2563eb;
+  --carbs: #10b981;
+  --fat: #f59e0b;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 26px;
+  --shadow-card: 0 16px 42px rgba(15, 23, 42, 0.07);
+  --shadow-float: 0 24px 70px rgba(15, 23, 42, 0.14);
 }
 
 * {
@@ -29,7 +42,10 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.85), transparent 42%), var(--bg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(246, 247, 249, 0) 280px),
+    radial-gradient(circle at 50% -12%, rgba(37, 99, 235, 0.08), transparent 34%),
+    var(--bg);
 }
 
 button,
@@ -42,9 +58,16 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: 2px;
+}
+
 .app-shell {
   width: 100%;
-  max-width: 520px;
+  max-width: 560px;
   margin: 0 auto;
   padding: max(18px, env(safe-area-inset-top)) 18px max(28px, env(safe-area-inset-bottom));
 }
@@ -100,9 +123,9 @@ button {
 .hero-title {
   margin: 0;
   font-size: 44px;
-  line-height: 0.95;
-  letter-spacing: -0.065em;
-  font-weight: 820;
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  font-weight: 860;
 }
 
 .hero-subtitle {
@@ -113,12 +136,12 @@ button {
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--border);
-  border-radius: 28px;
+  border-radius: var(--radius-lg);
   padding: 18px;
   margin: 14px 0;
-  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.055);
+  box-shadow: var(--shadow-card);
   backdrop-filter: blur(16px);
 }
 
@@ -127,12 +150,12 @@ button {
 }
 
 .card-title {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.12em;
   margin-bottom: 12px;
-  font-weight: 700;
+  font-weight: 850;
 }
 
 .segmented {
@@ -184,8 +207,8 @@ button {
 .field select {
   width: 100%;
   border: 1px solid var(--border);
-  background: #fbfbfd;
-  border-radius: 16px;
+  background: #fbfcfd;
+  border-radius: var(--radius-md);
   padding: 13px 14px;
   outline: none;
   color: var(--text);
@@ -199,7 +222,7 @@ button {
 .primary-button,
 .secondary-button {
   border: 0;
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   padding: 15px 18px;
   font-weight: 700;
   cursor: pointer;
@@ -235,26 +258,27 @@ button {
 }
 
 .metric {
-  background: #f5f5f7;
-  border-radius: 22px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
   padding: 15px;
   min-width: 0;
+  border: 1px solid rgba(223, 227, 232, 0.72);
 }
 
 .metric-label {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-weight: 850;
 }
 
 .metric-value {
   margin-top: 8px;
   font-size: 28px;
   line-height: 1;
-  letter-spacing: -0.05em;
-  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-weight: 860;
 }
 
 .metric-unit {
