@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PlanChoiceCard } from "./components/PlanChoiceCard";
 import { TuneNumbersStep } from "./components/TuneNumbersStep";
+import { WeeklyStructureCard } from "./components/WeeklyStructureCard";
 import { buildSafeCarbCyclingPlan as buildCarbCyclingPlan } from "./core/carbCyclingSafePlan";
 import { ACTIVITY_LEVELS, DEFAULT_INPUTS } from "./core/constants";
 import { copy, type AppCopy, type Language } from "./core/appCopy";
@@ -273,8 +274,9 @@ export default function AppRef() {
             )}
             <div className="summary-line"><span>RMR {result.rmr} kcal</span><span>TDEE {result.tdee} kcal</span><span>{t.expectedLoss} {result.weeklyLossKg} kg/week</span></div>
           </section>
-          <section className="card plan-home-status-card dashboard-reveal reveal-3"><div className="card-title">{t.status}</div><TimelineRiskPanel risk={timelineRisk} /></section>
-          <section className="card dashboard-reveal reveal-4">
+          {result.kind === "carbCycling" && <WeeklyStructureCard result={result} labels={t} language={language} />}
+          <section className="card plan-home-status-card dashboard-reveal reveal-4"><div className="card-title">{t.status}</div><TimelineRiskPanel risk={timelineRisk} /></section>
+          <section className="card dashboard-reveal reveal-5">
             <div className="section-head">
               <div>
                 <div className="card-title">{t.projection}</div>
@@ -286,8 +288,8 @@ export default function AppRef() {
             <div className="projection-table">{projection.slice(0, 6).map((row) => <div className="projection-row" key={row.week}><span>{t.week} {row.week}</span><strong>{row.weightKg.toFixed(2)} kg</strong></div>)}</div>
             <p className="small-note">{t.projectionNote}</p>
           </section>
-          <section className="card dashboard-reveal reveal-5"><div className="card-title">{t.execution}</div><p className="small-note">{sex === "female" ? t.femaleRules : result.kind === "carbCycling" ? t.carbRules : t.standardRules}</p></section>
-          {result.warnings.length > 0 && <section className="card dashboard-reveal reveal-6"><div className="card-title">{t.safety}</div>{result.warnings.map((warning) => <div className="warning" key={warning}>{warning}</div>)}</section>}
+          <section className="card dashboard-reveal reveal-6"><div className="card-title">{t.execution}</div><p className="small-note">{sex === "female" ? t.femaleRules : result.kind === "carbCycling" ? t.carbRules : t.standardRules}</p></section>
+          {result.warnings.length > 0 && <section className="card dashboard-reveal reveal-7"><div className="card-title">{t.safety}</div>{result.warnings.map((warning) => <div className="warning" key={warning}>{warning}</div>)}</section>}
         </div>
       )}
 
