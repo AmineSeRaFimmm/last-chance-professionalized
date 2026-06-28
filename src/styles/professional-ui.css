@@ -318,12 +318,18 @@
 }
 
 .diet-week-stack {
-  padding-inline: max(7%, calc((100vw - 560px) / 2 + 18px));
-  scroll-padding-inline: max(7%, calc((100vw - 560px) / 2 + 18px));
+  padding-inline: 0;
+  scroll-padding-inline: 0;
 }
 
 .diet-carousel-card {
-  flex: 0 0 min(84%, 430px);
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+.diet-carousel-card .diet-day-card {
+  width: 100%;
+  max-width: none;
 }
 
 .diet-day-card {
@@ -536,10 +542,6 @@
     flex-basis: min(46%, 430px);
   }
 
-  .workout-week-stack {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .profile-shell {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -549,5 +551,67 @@
   .profile-shell .profile-hero,
   .profile-shell > section:last-child {
     grid-column: 1 / -1;
+  }
+}
+
+.workout-carousel-stack {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: 0;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.workout-carousel-stack::-webkit-scrollbar {
+  display: none;
+}
+
+.workout-carousel-card {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.workout-carousel-card > .card {
+  width: 100%;
+  margin: 0;
+}
+
+.workout-info-card {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.workout-info-section {
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-card);
+}
+
+.workout-info-section.workout-program-card {
+  margin: 0;
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(155deg, rgba(16, 17, 20, 0.97), rgba(35, 39, 47, 0.96)),
+    #101114;
+  color: #ffffff;
+}
+
+@media (min-width: 900px) {
+  .workout-carousel-card {
+    flex-basis: min(46%, 430px);
   }
 }

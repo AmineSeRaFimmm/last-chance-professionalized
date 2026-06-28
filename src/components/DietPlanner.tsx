@@ -74,27 +74,25 @@ export function DietPlanner() {
   const savedInput = loadInput();
   const [overrides, setOverrides] = useState<DietMealOverride[]>(loadDietOverrides);
   const [composer, setComposer] = useState<ComposerState | null>(null);
-  const [activeDayIndex, setActiveDayIndex] = useState(0);
+  const [activeDayIndex, setActiveDayIndex] = useState(getTodayWeekIndex);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const weekStackRef = useRef<HTMLDivElement | null>(null);
-  const firstDayCardRef = useRef<HTMLDivElement | null>(null);
-  const didAlignInitialDayRef = useRef(false);
+  const activeDayCardRef = useRef<HTMLDivElement | null>(null);
   const baseWeek = savedInput ? buildDietWeek(savedInput) : [];
   const week = savedInput ? applyOverridesToWeek(baseWeek, overrides) : [];
   const carouselCards = getCarouselCards(week, baseWeek, activeDayIndex);
 
   useEffect(() => {
-    if (!savedInput || didAlignInitialDayRef.current) return;
+    if (!savedInput) return;
     const stack = weekStackRef.current;
-    const firstDayCard = firstDayCardRef.current;
-    if (!stack || !firstDayCard) return;
+    const activeDayCard = activeDayCardRef.current;
+    if (!stack || !activeDayCard) return;
 
     window.requestAnimationFrame(() => {
       const paddingLeft = parseFloat(window.getComputedStyle(stack).paddingLeft) || 0;
-      stack.scrollTo({ left: firstDayCard.offsetLeft - stack.offsetLeft - paddingLeft, behavior: "auto" });
-      didAlignInitialDayRef.current = true;
+      stack.scrollTo({ left: activeDayCard.offsetLeft - stack.offsetLeft - paddingLeft, behavior: "smooth" });
     });
-  }, [savedInput]);
+  }, [activeDayIndex, savedInput]);
 
   if (!savedInput) {
     return (
@@ -182,7 +180,7 @@ export function DietPlanner() {
       >
         <DietInfoCard labels={t} />
         {carouselCards.map(({ baseDay, day, index, slot }) => (
-          <div className={`diet-carousel-card diet-carousel-card-${slot}`} key={`${day.day}-${index}`} ref={index === 0 ? firstDayCardRef : undefined}>
+          <div className={`diet-carousel-card diet-carousel-card-${slot}`} key={`${day.day}-${index}`} ref={index === activeDayIndex ? activeDayCardRef : undefined}>
             <DietDayCard
               baseDay={baseDay}
               day={day}
@@ -364,6 +362,12 @@ function applyOverridesToWeek(baseWeek: DietDay[], overrides: DietMealOverride[]
 function getCarouselCards(week: DietDay[], baseWeek: DietDay[], activeIndex: number): CarouselDayCard[] {
   void activeIndex;
   return week.map((day, index) => ({ baseDay: baseWeek[index], day, index, slot: "current" }));
+}
+
+function getTodayWeekIndex(): number {
+  if (typeof Date === "undefined") return 0;
+  const day = new Date().getDay();
+  return day === 0 ? 6 : day - 1;
 }
 
 function normalizeDayIndex(index: number, length: number): number {

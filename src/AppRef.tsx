@@ -153,6 +153,7 @@ export default function AppRef() {
   }
 
   function openSetupForm() {
+    setTimelineManuallyAdjusted(false);
     setSetupStage("plan");
     setSetupOpen(true);
   }

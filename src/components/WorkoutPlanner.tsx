@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { CustomWorkoutBuilderOverlay } from "./CustomWorkoutBuilderOverlay";
 import { buildSafeCarbCyclingPlan as buildCarbCyclingPlan } from "../core/carbCyclingSafePlan";
 import { getExerciseGifMatch, getExerciseGifUrl, getExerciseThumbUrl } from "../core/exerciseGifMap";
@@ -182,6 +182,10 @@ export function WorkoutPlanner() {
   const [customPlan, setCustomPlan] = useState<CustomWorkoutPlanData | null>(loadCustomWorkoutPlan);
   const [selectedGif, setSelectedGif] = useState<SelectedWorkoutGif | null>(null);
   const [programId, setProgramId] = useState<WorkoutProgramId>(loadProgramId);
+  const [activeWorkoutCardIndex, setActiveWorkoutCardIndex] = useState(1);
+  const workoutStackRef = useRef<HTMLDivElement | null>(null);
+  const activeWorkoutCardRef = useRef<HTMLDivElement | null>(null);
+  const workoutSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const result = useMemo(() => (savedInput ? buildResult(savedInput) : null), [savedInput]);
   const plan = useMemo(() => {
     if (customPlan) return customWorkoutToWorkoutPlan(customPlan);
@@ -201,6 +205,18 @@ export function WorkoutPlanner() {
     warmImageCache(plan.days.flatMap((day) => day.exercises.map((exercise) => getWorkoutExerciseMedia(exercise).thumbUrl)), 24);
   }, [plan]);
 
+  useEffect(() => {
+    if (!plan) return;
+    const stack = workoutStackRef.current;
+    const activeCard = activeWorkoutCardRef.current;
+    if (!stack || !activeCard) return;
+
+    window.requestAnimationFrame(() => {
+      const paddingLeft = parseFloat(window.getComputedStyle(stack).paddingLeft) || 0;
+      stack.scrollTo({ left: activeCard.offsetLeft - stack.offsetLeft - paddingLeft, behavior: "smooth" });
+    });
+  }, [activeWorkoutCardIndex, plan]);
+
   function chooseProgram(nextProgramId: WorkoutProgramId) {
     clearCustomWorkoutPlan();
     setCustomPlan(null);
@@ -214,6 +230,33 @@ export function WorkoutPlanner() {
     setCustomPlan(savedPlan);
     setCustomBuilderOpen(false);
     setSelectorOpen(false);
+  }
+
+  function moveActiveWorkoutCard(offset: number) {
+    if (!plan) return;
+    setActiveWorkoutCardIndex((index) => normalizeCarouselIndex(index + offset, plan.days.length + 1));
+  }
+
+  function handleWorkoutCarouselPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    workoutSwipeStartRef.current = { x: event.clientX, y: event.clientY };
+  }
+
+  function handleWorkoutCarouselPointerCancel() {
+    workoutSwipeStartRef.current = null;
+  }
+
+  function handleWorkoutCarouselPointerUp(event: PointerEvent<HTMLDivElement>) {
+    const start = workoutSwipeStartRef.current;
+    workoutSwipeStartRef.current = null;
+    if (!start || !plan) return;
+
+    const deltaX = event.clientX - start.x;
+    const deltaY = event.clientY - start.y;
+    const isHorizontalSwipe = Math.abs(deltaX) > 44 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2;
+    if (!isHorizontalSwipe) return;
+
+    moveActiveWorkoutCard(deltaX < 0 ? 1 : -1);
   }
 
   if (!savedInput || !result || !plan) {
@@ -245,26 +288,22 @@ export function WorkoutPlanner() {
         <p className="hero-subtitle">{tr(plan.subtitle, language)}</p>
       </section>
 
-      <section className="card workout-program-card">
-        <div>
-          <div className="card-title">{plan.title}</div>
-          <p className="small-note no-margin">{tr(plan.program.description, language)}</p>
+      <div
+        className="workout-week-stack workout-carousel-stack"
+        onPointerCancel={handleWorkoutCarouselPointerCancel}
+        onPointerDown={handleWorkoutCarouselPointerDown}
+        onPointerLeave={handleWorkoutCarouselPointerCancel}
+        onPointerUp={handleWorkoutCarouselPointerUp}
+        ref={workoutStackRef}
+      >
+        <div className="workout-carousel-card workout-info-carousel-card" ref={activeWorkoutCardIndex === 0 ? activeWorkoutCardRef : undefined}>
+          <WorkoutInfoCard labels={t} language={language} plan={plan} />
         </div>
-        <div className="program-best-for">
-          <span>{t.bestFor}</span>
-          <strong>{tr(plan.program.bestFor, language)}</strong>
-        </div>
-      </section>
-
-      <section className="card">
-        <div className="card-title">{t.principles}</div>
-        <div className="principle-stack">
-          {plan.principles.map((principle) => <div className="principle-line" key={principle}>{tr(principle, language)}</div>)}
-        </div>
-      </section>
-
-      <div className="workout-week-stack">
-        {plan.days.map((day) => <WorkoutDayCard day={day} labels={t} language={language} onOpenGif={setSelectedGif} hideIntentIntensity={Boolean(customPlan)} key={day.day} />)}
+        {plan.days.map((day, index) => (
+          <div className="workout-carousel-card" ref={activeWorkoutCardIndex === index + 1 ? activeWorkoutCardRef : undefined} key={day.day}>
+            <WorkoutDayCard day={day} labels={t} language={language} onOpenGif={setSelectedGif} hideIntentIntensity={Boolean(customPlan)} />
+          </div>
+        ))}
       </div>
 
       {selectorOpen && (
@@ -304,6 +343,30 @@ export function WorkoutPlanner() {
       {customBuilderOpen && <CustomWorkoutBuilderOverlay initialPlan={customPlan} language={language} onBack={() => setCustomBuilderOpen(false)} onSave={saveCustomPlan} />}
       {selectedGif && <WorkoutGifOverlay gif={selectedGif} labels={t} onClose={() => setSelectedGif(null)} />}
     </main>
+  );
+}
+
+function WorkoutInfoCard({ labels, language, plan }: { labels: typeof copy.en | typeof copy.zh; language: Language; plan: ReturnType<typeof buildWorkoutPlan> }) {
+  return (
+    <section className="card workout-info-card">
+      <div className="workout-info-section workout-program-card">
+        <div>
+          <div className="card-title">{plan.title}</div>
+          <p className="small-note no-margin">{tr(plan.program.description, language)}</p>
+        </div>
+        <div className="program-best-for">
+          <span>{labels.bestFor}</span>
+          <strong>{tr(plan.program.bestFor, language)}</strong>
+        </div>
+      </div>
+
+      <div className="workout-info-section">
+        <div className="card-title">{labels.principles}</div>
+        <div className="principle-stack">
+          {plan.principles.map((principle) => <div className="principle-line" key={principle}>{tr(principle, language)}</div>)}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -429,6 +492,10 @@ function loadProgramId(): WorkoutProgramId {
 function groupPrograms(): [WorkoutProgramCategory, WorkoutProgramOption[]][] {
   const categories: WorkoutProgramCategory[] = ["default", "powerlifting", "bodybuilding", "machine", "crossfit", "generalStrength", "home"];
   return categories.map((category) => [category, WORKOUT_PROGRAM_OPTIONS.filter((option) => option.category === category)]);
+}
+
+function normalizeCarouselIndex(index: number, length: number): number {
+  return ((index % length) + length) % length;
 }
 
 function loadLanguage(): Language {
