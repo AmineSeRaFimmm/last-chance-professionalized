@@ -182,9 +182,10 @@ export function WorkoutPlanner() {
   const [customPlan, setCustomPlan] = useState<CustomWorkoutPlanData | null>(loadCustomWorkoutPlan);
   const [selectedGif, setSelectedGif] = useState<SelectedWorkoutGif | null>(null);
   const [programId, setProgramId] = useState<WorkoutProgramId>(loadProgramId);
-  const [activeWorkoutCardIndex, setActiveWorkoutCardIndex] = useState(1);
+  const [activeWorkoutCardIndex, setActiveWorkoutCardIndex] = useState(getTodayWorkoutCardIndex);
   const workoutStackRef = useRef<HTMLDivElement | null>(null);
   const activeWorkoutCardRef = useRef<HTMLDivElement | null>(null);
+  const didAlignInitialWorkoutCardRef = useRef(false);
   const workoutSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const result = useMemo(() => (savedInput ? buildResult(savedInput) : null), [savedInput]);
   const plan = useMemo(() => {
@@ -213,7 +214,9 @@ export function WorkoutPlanner() {
 
     window.requestAnimationFrame(() => {
       const paddingLeft = parseFloat(window.getComputedStyle(stack).paddingLeft) || 0;
-      stack.scrollTo({ left: activeCard.offsetLeft - stack.offsetLeft - paddingLeft, behavior: "smooth" });
+      const behavior: ScrollBehavior = didAlignInitialWorkoutCardRef.current ? "smooth" : "auto";
+      stack.scrollTo({ left: activeCard.offsetLeft - stack.offsetLeft - paddingLeft, behavior });
+      didAlignInitialWorkoutCardRef.current = true;
     });
   }, [activeWorkoutCardIndex, plan]);
 
@@ -496,6 +499,12 @@ function groupPrograms(): [WorkoutProgramCategory, WorkoutProgramOption[]][] {
 
 function normalizeCarouselIndex(index: number, length: number): number {
   return ((index % length) + length) % length;
+}
+
+function getTodayWorkoutCardIndex(): number {
+  if (typeof Date === "undefined") return 1;
+  const day = new Date().getDay();
+  return (day === 0 ? 6 : day - 1) + 1;
 }
 
 function loadLanguage(): Language {
