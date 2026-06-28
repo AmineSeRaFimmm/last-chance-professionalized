@@ -200,6 +200,7 @@ export function WorkoutPlanner() {
         })
       : null;
   }, [customPlan, programId, savedInput, result]);
+  const hasWorkoutPlan = Boolean(plan);
 
   useEffect(() => {
     if (!plan) return;
@@ -207,7 +208,7 @@ export function WorkoutPlanner() {
   }, [plan]);
 
   useEffect(() => {
-    if (!plan) return;
+    if (!hasWorkoutPlan) return;
     const stack = workoutStackRef.current;
     const activeCard = activeWorkoutCardRef.current;
     if (!stack || !activeCard) return;
@@ -218,7 +219,7 @@ export function WorkoutPlanner() {
       stack.scrollTo({ left: activeCard.offsetLeft - stack.offsetLeft - paddingLeft, behavior });
       didAlignInitialWorkoutCardRef.current = true;
     });
-  }, [activeWorkoutCardIndex, plan]);
+  }, [activeWorkoutCardIndex, hasWorkoutPlan]);
 
   function chooseProgram(nextProgramId: WorkoutProgramId) {
     clearCustomWorkoutPlan();

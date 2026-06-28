@@ -72,6 +72,7 @@ export function DietPlanner() {
   const language = loadLanguage();
   const t = copy[language];
   const savedInput = loadInput();
+  const hasSavedInput = Boolean(savedInput);
   const [overrides, setOverrides] = useState<DietMealOverride[]>(loadDietOverrides);
   const [composer, setComposer] = useState<ComposerState | null>(null);
   const [activeDayIndex, setActiveDayIndex] = useState(getTodayWeekIndex);
@@ -83,7 +84,7 @@ export function DietPlanner() {
   const carouselCards = getCarouselCards(week, baseWeek, activeDayIndex);
 
   useEffect(() => {
-    if (!savedInput) return;
+    if (!hasSavedInput) return;
     const stack = weekStackRef.current;
     const activeDayCard = activeDayCardRef.current;
     if (!stack || !activeDayCard) return;
@@ -92,7 +93,7 @@ export function DietPlanner() {
       const paddingLeft = parseFloat(window.getComputedStyle(stack).paddingLeft) || 0;
       stack.scrollTo({ left: activeDayCard.offsetLeft - stack.offsetLeft - paddingLeft, behavior: "smooth" });
     });
-  }, [activeDayIndex, savedInput]);
+  }, [activeDayIndex, hasSavedInput]);
 
   if (!savedInput) {
     return (
