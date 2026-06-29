@@ -180,7 +180,7 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
     const isVerticalDrag = Math.abs(deltaY) >= 30 && Math.abs(deltaY) > Math.abs(deltaX) * 1.15;
     if (!isVerticalDrag) return;
 
-    rotateDraftCycle(deltaY < 0 ? 1 : -1);
+    rotateDraftCycle(deltaY < 0 ? -1 : 1);
     swipeStartRef.current = { x: event.clientX, y: event.clientY };
   }
 
@@ -267,8 +267,8 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
 
             <div className="weekly-adjust-tools">
               <div className="weekly-cycle-shift" aria-label={language === "zh" ? "移动碳水循环" : "Shift carb cycle"}>
-                <button type="button" aria-label={language === "zh" ? "上移循环" : "Shift up"} onClick={() => rotateDraftCycle(1)}>↑</button>
-                <button type="button" aria-label={language === "zh" ? "下移循环" : "Shift down"} onClick={() => rotateDraftCycle(-1)}>↓</button>
+                <button type="button" aria-label={language === "zh" ? "上移循环" : "Shift up"} onClick={() => rotateDraftCycle(-1)}>↑</button>
+                <button type="button" aria-label={language === "zh" ? "下移循环" : "Shift down"} onClick={() => rotateDraftCycle(1)}>↓</button>
               </div>
               <button type="button" onClick={handleReset}>{t.reset}</button>
             </div>
