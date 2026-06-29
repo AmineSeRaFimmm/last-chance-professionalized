@@ -247,8 +247,19 @@ export function DietPlanner() {
 }
 
 function DietShoppingListCard({ groups, labels }: { groups: ShoppingGroup[]; labels: typeof copy.en | typeof copy.zh }) {
-  const itemCount = groups.reduce((total, group) => total + group.items.length, 0);
-  const totalGrams = groups.reduce((total, group) => total + group.items.reduce((groupTotal, item) => groupTotal + item.grams, 0), 0);
+  const [purchasedItems, setPurchasedItems] = useState<Set<string>>(() => new Set());
+
+  function togglePurchasedItem(name: string) {
+    setPurchasedItems((current) => {
+      const next = new Set(current);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
+  }
 
   return (
     <section className="card diet-day-card diet-shopping-card" aria-label={labels.shoppingTitle}>
@@ -268,20 +279,15 @@ function DietShoppingListCard({ groups, labels }: { groups: ShoppingGroup[]; lab
             </div>
             <div className="diet-shopping-list">
               {group.items.map((item) => (
-                <div className={`diet-shopping-line ${item.role}`} key={item.name}>
-                  <span>{item.name}</span>
+                <button className={`diet-shopping-line ${item.role} ${purchasedItems.has(item.name) ? "purchased" : ""}`} key={item.name} type="button" onDoubleClick={() => togglePurchasedItem(item.name)} aria-pressed={purchasedItems.has(item.name)}>
+                  <span className="diet-shopping-name">{item.name}</span>
+                  <i aria-hidden="true" />
                   <strong>{formatShoppingAmount(item.grams)}</strong>
-                </div>
+                </button>
               ))}
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="diet-shopping-summary">
-        <span>{labels.shoppingSummary}</span>
-        <span>{itemCount} {labels.shoppingItems}</span>
-        <strong>{formatShoppingAmount(totalGrams)} {labels.shoppingTotal}</strong>
       </div>
     </section>
   );

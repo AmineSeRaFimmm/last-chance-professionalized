@@ -98,8 +98,7 @@
 }
 
 .diet-shopping-group-head,
-.diet-shopping-line,
-.diet-shopping-summary {
+.diet-shopping-line {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -132,17 +131,38 @@
 
 .diet-shopping-line {
   min-height: 34px;
+  width: 100%;
+  border: 0;
   border-radius: 15px;
   padding: 8px 10px;
   background: rgba(245, 245, 247, 0.78);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 180ms ease, box-shadow 180ms ease, opacity 180ms ease, transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.diet-shopping-line span {
+.diet-shopping-line:active {
+  transform: scale(0.992);
+}
+
+.diet-shopping-name {
   min-width: 0;
   color: var(--text);
   font-size: 13px;
   font-weight: 720;
   line-height: 1.2;
+  transition: color 180ms ease, opacity 180ms ease, text-decoration-color 180ms ease;
+}
+
+.diet-shopping-line i {
+  flex: 1 1 auto;
+  min-width: 18px;
+  height: 1px;
+  border-bottom: 1px dashed rgba(142, 142, 147, 0.34);
+  transform: translateY(1px);
+  transition: border-color 180ms ease, opacity 180ms ease;
 }
 
 .diet-shopping-line strong {
@@ -151,6 +171,26 @@
   font-size: 13px;
   font-weight: 850;
   letter-spacing: -0.02em;
+  transition: color 180ms ease, opacity 180ms ease, text-decoration-color 180ms ease;
+}
+
+.diet-shopping-line.purchased {
+  background: rgba(238, 240, 243, 0.56);
+  box-shadow: inset 0 0 0 1px rgba(16, 17, 20, 0.05);
+}
+
+.diet-shopping-line.purchased i {
+  border-bottom-color: rgba(104, 111, 123, 0.18);
+}
+
+.diet-shopping-line.purchased::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #101114;
+  box-shadow: 0 0 0 4px rgba(16, 17, 20, 0.08);
 }
 
 .diet-shopping-line.protein strong {
@@ -169,19 +209,12 @@
   color: #166534;
 }
 
-.diet-shopping-summary {
-  margin-top: auto;
-  border-radius: 18px;
-  padding: 11px 12px;
-  background: #101114;
-  color: #ffffff;
-}
-
-.diet-shopping-summary span,
-.diet-shopping-summary strong {
-  color: inherit;
-  font-size: 12px;
-  font-weight: 800;
+.diet-shopping-line.purchased .diet-shopping-name,
+.diet-shopping-line.purchased strong {
+  color: rgba(104, 111, 123, 0.68);
+  text-decoration-line: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: rgba(104, 111, 123, 0.42);
 }
 
 .diet-day-head {
