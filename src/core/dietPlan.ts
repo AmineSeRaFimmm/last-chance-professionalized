@@ -47,27 +47,27 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const TEMPLATE_CANDIDATE_SEEDS = Array.from({ length: 12 }, (_, index) => index);
 
 const proteins: FoodItem[] = [
-  { name: "Chicken breast", kcal: 165, protein: 31, carbs: 0, fat: 3.6 },
-  { name: "Lean beef", kcal: 176, protein: 26, carbs: 0, fat: 8 },
-  { name: "Shrimp", kcal: 99, protein: 24, carbs: 0.2, fat: 0.3 },
-  { name: "Tuna", kcal: 132, protein: 29, carbs: 0, fat: 1 },
+  { name: "Chicken breast", kcal: 120, protein: 22.5, carbs: 0, fat: 2.6 },
+  { name: "Lean beef", kcal: 176, protein: 20, carbs: 0, fat: 10 },
+  { name: "Shrimp", kcal: 85, protein: 20.1, carbs: 0, fat: 0.5 },
+  { name: "Tuna", kcal: 109, protein: 24.4, carbs: 0, fat: 0.5 },
   { name: "Egg whites", kcal: 52, protein: 11, carbs: 0.7, fat: 0.2 },
   { name: "Whole eggs", kcal: 143, protein: 13, carbs: 0.7, fat: 9.5 }
 ];
 
 const carbs: FoodItem[] = [
-  { name: "Cooked rice", kcal: 130, protein: 2.7, carbs: 28, fat: 0.3 },
-  { name: "Cooked brown rice", kcal: 123, protein: 2.7, carbs: 25.6, fat: 1 },
-  { name: "Cooked pasta", kcal: 158, protein: 5.8, carbs: 31, fat: 0.9 },
-  { name: "Potato", kcal: 87, protein: 1.9, carbs: 20, fat: 0.1 },
+  { name: "Rice", kcal: 365, protein: 7.1, carbs: 80, fat: 0.7 },
+  { name: "Brown rice", kcal: 370, protein: 7.9, carbs: 77.2, fat: 2.9 },
+  { name: "Pasta", kcal: 371, protein: 13, carbs: 75, fat: 1.5 },
+  { name: "Potato", kcal: 77, protein: 2, carbs: 17, fat: 0.1 },
   { name: "Sweet potato", kcal: 86, protein: 1.6, carbs: 20, fat: 0.1 },
   { name: "Oats", kcal: 389, protein: 16.9, carbs: 66, fat: 6.9 },
   { name: "Whole wheat bread", kcal: 247, protein: 13, carbs: 41, fat: 4.2 },
-  { name: "Corn", kcal: 96, protein: 3.4, carbs: 21, fat: 1.5 }
+  { name: "Corn", kcal: 86, protein: 3.2, carbs: 19, fat: 1.2 }
 ];
 
 const vegetables: FoodItem[] = [
-  { name: "Broccoli", kcal: 35, protein: 2.4, carbs: 7, fat: 0.4 },
+  { name: "Broccoli", kcal: 34, protein: 2.8, carbs: 6.6, fat: 0.4 },
   { name: "Spinach", kcal: 23, protein: 2.9, carbs: 3.6, fat: 0.4 },
   { name: "Zucchini", kcal: 17, protein: 1.2, carbs: 3.1, fat: 0.3 },
   { name: "Mushrooms", kcal: 22, protein: 3.1, carbs: 3.3, fat: 0.3 },
@@ -104,6 +104,12 @@ export const FOOD_CATALOG = { proteins, carbs, vegetables, fruits, fats, dairy }
 export type FoodCategory = keyof typeof FOOD_CATALOG;
 export type FoodWithCategory = FoodItem & { category: FoodCategory };
 
+const foodNameAliases: Record<string, string> = {
+  "Cooked rice": "Rice",
+  "Cooked brown rice": "Brown rice",
+  "Cooked pasta": "Pasta"
+};
+
 const customFoodOptions: Partial<Record<FoodCategory, FoodItem[]>> = {
   proteins: [
     { name: "Salmon", kcal: 208, protein: 20.4, carbs: 0, fat: 13.4 },
@@ -132,7 +138,8 @@ export function getAllFoods(): FoodWithCategory[] {
 }
 
 export function getFoodByName(name: string): FoodWithCategory | null {
-  return getAllFoods().find((food) => food.name === name) ?? null;
+  const normalizedName = foodNameAliases[name] ?? name;
+  return getAllFoods().find((food) => food.name === normalizedName) ?? null;
 }
 
 export function getFoodCategory(name: string): FoodCategory | null {

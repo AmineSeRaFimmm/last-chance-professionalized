@@ -49,6 +49,7 @@ const copy = {
     infoTitle: "Nutrition notes",
     infoSubtitle: "The rules that matter most during a cut.",
     infoItems: [
+      "Ingredient grams use raw weight for fresh foods and dry weight for rice, pasta, and oats.",
       "Hit protein first, then adjust carbs and fats around training.",
       "Keep meals repeatable; consistency beats perfect daily variety.",
       "Use low-fat protein and high-fiber plants when hunger is high.",
@@ -81,6 +82,7 @@ const copy = {
     infoTitle: "饮食注意事项",
     infoSubtitle: "减脂期最关键的执行原则。",
     infoItems: [
+      "食材克数按生重计算；米、意面和燕麦按干重计算。",
       "优先保证蛋白质，再根据训练日调整碳水和脂肪。",
       "饮食越可重复，越容易稳定执行；不需要每天追求复杂变化。",
       "饥饿感强时，优先选择低脂蛋白和高纤维蔬菜。",
