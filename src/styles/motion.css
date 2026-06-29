@@ -233,9 +233,12 @@
   animation: none;
 }
 
-.diet-carousel-card.is-active,
-.workout-carousel-card.is-active {
+.diet-carousel-card.is-active {
   animation: active-carousel-settle 260ms var(--ease-ios) 120ms both;
+}
+
+.workout-carousel-card.is-active {
+  animation: workout-active-carousel-settle 220ms var(--ease-ios) 120ms both;
 }
 
 @keyframes tab-region-enter {
@@ -253,6 +256,15 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes workout-active-carousel-settle {
+  from {
+    opacity: 0.96;
+  }
+  to {
+    opacity: 1;
   }
 }
 
