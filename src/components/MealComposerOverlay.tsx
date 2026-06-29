@@ -3,8 +3,7 @@ import type { DietMeal, FoodCategory, FoodWithCategory } from "../core/dietPlan"
 import {
   getMealFoodOptions,
   getMealFoodRole,
-  optimizeMealFromFoodNames,
-  replaceFoodByRole
+  optimizeMealFromFoodNames
 } from "../core/mealOptimizer";
 
 type Language = "en" | "zh";
@@ -232,7 +231,7 @@ export function MealComposerOverlay({
   }, [Boolean(activeDrag)]);
 
   function addFood(foodName: string) {
-    setSelectedFoodNames((current) => replaceFoodByRole(current, foodName));
+    setSelectedFoodNames((current) => current.includes(foodName) ? current : [...current, foodName]);
   }
 
   function removeFood(foodName: string) {
