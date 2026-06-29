@@ -96,9 +96,12 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [offset, setOffset] = useState(() => loadCarbRotationOffset());
   const [focusByDay, setFocusByDay] = useState<FocusByDay>(() => loadTrainingFocusByDay());
+  const [activeFocusDay, setActiveFocusDay] = useState<string | null>(null);
+  const [savedPulse, setSavedPulse] = useState(false);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const rows = useMemo(() => buildRows(result, offset, focusByDay), [result, offset, focusByDay]);
+  const carbSummary = useMemo(() => buildCarbSummary(rows, language), [rows, language]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -106,12 +109,19 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
     return () => document.body.classList.remove("weekly-adjust-open");
   }, [adjustOpen]);
 
+  useEffect(() => {
+    if (!savedPulse) return;
+    const timer = window.setTimeout(() => setSavedPulse(false), 900);
+    return () => window.clearTimeout(timer);
+  }, [savedPulse]);
+
   function rotateCycle(direction: number) {
     setOffset((current) => {
       const next = current + direction;
       saveCarbRotationOffset(next);
       return next;
     });
+    setSavedPulse(true);
   }
 
   function handleCarbPointerDown(event: PointerEvent<HTMLButtonElement>) {
@@ -139,6 +149,8 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
       saveTrainingFocusByDay(next);
       return next;
     });
+    setActiveFocusDay(null);
+    setSavedPulse(true);
   }
 
   function handleReset() {
@@ -146,6 +158,8 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
     saveTrainingFocusByDay({});
     setOffset(0);
     setFocusByDay({});
+    setActiveFocusDay(null);
+    setSavedPulse(true);
   }
 
   return (
@@ -154,6 +168,7 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
         <div className="weekly-structure-header">
           <div>
             <div className="card-title no-margin">{labels.weeklyStructure}</div>
+            <strong>{carbSummary}</strong>
             <p className="small-note no-margin">{t.helper}</p>
           </div>
           <button className="adjust-button" type="button" onClick={() => setAdjustOpen(true)}>{t.adjust}</button>
@@ -171,18 +186,25 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
             </div>
           ))}
         </div>
+        <p className="weekly-structure-note">{language === "zh" ? "高碳日更适合安排高强度训练。" : "High carb days are best paired with heavier training."}</p>
       </section>
 
       {adjustOpen && (
         <div className="weekly-adjust-overlay" role="dialog" aria-modal="true" aria-label={labels.weeklyStructure}>
-          <button className="weekly-adjust-backdrop" type="button" aria-label={t.done} onClick={() => setAdjustOpen(false)} />
+          <button className="weekly-adjust-backdrop" type="button" aria-label={t.done} onClick={() => { setActiveFocusDay(null); setAdjustOpen(false); }} />
           <section className="weekly-adjust-modal">
             <div className="weekly-adjust-modal-header">
               <div>
                 <strong>{labels.weeklyStructure}</strong>
-                <span>{t.helper}</span>
+                <span>{savedPulse ? (language === "zh" ? "已保存" : "Saved") : t.helper}</span>
               </div>
-              <button className="weekly-adjust-done" type="button" onClick={() => setAdjustOpen(false)}>{t.done}</button>
+              <button className="weekly-adjust-done" type="button" onClick={() => { setActiveFocusDay(null); setAdjustOpen(false); }}>{t.done}</button>
+            </div>
+
+            <div className="weekly-shift-control" aria-label={language === "zh" ? "调整碳水循环" : "Adjust carb cycle"}>
+              <button type="button" onClick={() => rotateCycle(-1)}>{language === "zh" ? "后移" : "Later"}</button>
+              <span>{carbSummary}</span>
+              <button type="button" onClick={() => rotateCycle(1)}>{language === "zh" ? "前移" : "Earlier"}</button>
             </div>
 
             <div className="weekly-adjust-grid">
@@ -202,9 +224,9 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
                   >
                     {formatCarbType(row.carbType, language)}
                   </button>
-                  <select className="weekly-focus-select" value={row.focus} onChange={(event) => handleFocusChange(row.day, event.target.value as TrainingFocusKey)}>
-                    {focusOptions.map((focus) => <option value={focus} key={focus}>{t.focus[focus]}</option>)}
-                  </select>
+                  <button className="weekly-focus-button" type="button" onClick={() => setActiveFocusDay((current) => current === row.day ? null : row.day)}>
+                    <span>{t.focus[row.focus]}</span>
+                  </button>
                 </div>
               ))}
             </div>
@@ -214,11 +236,46 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
               <button type="button" onClick={() => rotateCycle(-1)}>{language === "zh" ? "下移循环" : "Shift down"}</button>
               <button type="button" onClick={() => rotateCycle(1)}>{language === "zh" ? "上移循环" : "Shift up"}</button>
             </div>
+
+            {activeFocusDay && (
+              <div className="weekly-focus-panel" role="dialog" aria-label={language === "zh" ? "选择训练部位" : "Choose training focus"}>
+                <button className="weekly-focus-panel-backdrop" type="button" aria-label={t.done} onClick={() => setActiveFocusDay(null)} />
+                <div className="weekly-focus-panel-card">
+                  <div>
+                    <span>{activeFocusDay}</span>
+                    <strong>{language === "zh" ? "训练重点" : "Training focus"}</strong>
+                  </div>
+                  <div className="weekly-focus-options">
+                    {focusOptions.map((focus) => (
+                      <button
+                        className={rows.find((row) => row.day === activeFocusDay)?.focus === focus ? "active" : ""}
+                        type="button"
+                        onClick={() => handleFocusChange(activeFocusDay, focus)}
+                        key={focus}
+                      >
+                        {t.focus[focus]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         </div>
       )}
     </>
   );
+}
+
+function buildCarbSummary(rows: WeeklyStructureRow[], language: Language): string {
+  const counts = rows.reduce<Record<CarbType, number>>(
+    (summary, row) => ({ ...summary, [row.carbType]: summary[row.carbType] + 1 }),
+    { High: 0, Medium: 0, Low: 0 }
+  );
+  const high = language === "zh" ? "高" : "High";
+  const medium = language === "zh" ? "中" : "Medium";
+  const low = language === "zh" ? "低" : "Low";
+  return `${counts.High} ${high} · ${counts.Medium} ${medium} · ${counts.Low} ${low}`;
 }
 
 function buildRows(result: CarbCyclingPlanResult, offset: number, focusByDay: FocusByDay): WeeklyStructureRow[] {
