@@ -106,7 +106,6 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
   const rows = useMemo(() => buildRows(result, offset, focusByDay), [result, offset, focusByDay]);
   const draftRows = useMemo(() => buildRows(result, draftOffset, draftFocusByDay), [result, draftOffset, draftFocusByDay]);
   const carbSummary = useMemo(() => buildCarbSummary(rows, language), [rows, language]);
-  const draftCarbSummary = useMemo(() => buildCarbSummary(draftRows, language), [draftRows, language]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -267,7 +266,10 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
             </div>
 
             <div className="weekly-adjust-tools">
-              <span>{draftCarbSummary}</span>
+              <div className="weekly-cycle-shift" aria-label={language === "zh" ? "移动碳水循环" : "Shift carb cycle"}>
+                <button type="button" aria-label={language === "zh" ? "上移循环" : "Shift up"} onClick={() => rotateDraftCycle(1)}>↑</button>
+                <button type="button" aria-label={language === "zh" ? "下移循环" : "Shift down"} onClick={() => rotateDraftCycle(-1)}>↓</button>
+              </div>
               <button type="button" onClick={handleReset}>{t.reset}</button>
             </div>
 
@@ -275,10 +277,6 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
               <div className="weekly-focus-panel" role="dialog" aria-label={language === "zh" ? "选择训练部位" : "Choose training focus"}>
                 <button className="weekly-focus-panel-backdrop" type="button" aria-label={t.done} onClick={() => setActiveFocusDay(null)} />
                 <div className="weekly-focus-panel-card">
-                  <div>
-                    <span>{activeFocusDay}</span>
-                    <strong>{language === "zh" ? "训练重点" : "Training focus"}</strong>
-                  </div>
                   <div className="weekly-focus-options">
                     {focusOptions.map((focus) => (
                       <button
