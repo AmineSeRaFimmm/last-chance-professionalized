@@ -23,6 +23,20 @@ interface CarouselDayCard {
   slot: CarouselSlot;
 }
 
+type ShoppingRole = "protein" | "carb" | "fat" | "plant";
+
+interface ShoppingIngredient {
+  name: string;
+  grams: number;
+  role: ShoppingRole;
+}
+
+interface ShoppingGroup {
+  role: ShoppingRole;
+  label: string;
+  items: ShoppingIngredient[];
+}
+
 const copy = {
   en: {
     title: "Diet",
@@ -40,6 +54,17 @@ const copy = {
       "Use low-fat protein and high-fiber plants when hunger is high.",
       "Do not let cooking oil, sauces, or snacks erase the deficit."
     ],
+    shoppingTitle: "Weekly shopping list",
+    shoppingSubtitle: "Auto-summed from all meals in this week.",
+    shoppingSummary: "7 days",
+    shoppingItems: "items",
+    shoppingTotal: "total",
+    shoppingGroups: {
+      protein: "Protein",
+      carb: "Carbs",
+      fat: "Fats",
+      plant: "Plants"
+    },
     kcal: "kcal",
     protein: "P",
     carbs: "C",
@@ -61,6 +86,17 @@ const copy = {
       "饥饿感强时，优先选择低脂蛋白和高纤维蔬菜。",
       "不要让烹调用油、酱料和零食悄悄抵消热量缺口。"
     ],
+    shoppingTitle: "一周采购清单",
+    shoppingSubtitle: "自动汇总本周所有餐卡食材。",
+    shoppingSummary: "7 天",
+    shoppingItems: "项",
+    shoppingTotal: "合计",
+    shoppingGroups: {
+      protein: "蛋白质",
+      carb: "碳水",
+      fat: "脂肪",
+      plant: "蔬果"
+    },
     kcal: "kcal",
     protein: "蛋白",
     carbs: "碳水",
@@ -183,6 +219,7 @@ export function DietPlanner() {
         ref={weekStackRef}
       >
         <DietInfoCard labels={t} />
+        <DietShoppingListCard groups={buildShoppingGroups(week, t.shoppingGroups)} labels={t} />
         {carouselCards.map(({ baseDay, day, index, slot }) => (
           <div className={`diet-carousel-card diet-carousel-card-${slot} ${index === activeDayIndex ? "is-active" : ""}`} key={`${day.day}-${index}`} ref={index === activeDayIndex ? activeDayCardRef : undefined}>
             <DietDayCard
@@ -206,6 +243,47 @@ export function DietPlanner() {
         />
       )}
     </main>
+  );
+}
+
+function DietShoppingListCard({ groups, labels }: { groups: ShoppingGroup[]; labels: typeof copy.en | typeof copy.zh }) {
+  const itemCount = groups.reduce((total, group) => total + group.items.length, 0);
+  const totalGrams = groups.reduce((total, group) => total + group.items.reduce((groupTotal, item) => groupTotal + item.grams, 0), 0);
+
+  return (
+    <section className="card diet-day-card diet-shopping-card" aria-label={labels.shoppingTitle}>
+      <div className="diet-shopping-head">
+        <div>
+          <div className="card-title no-margin">{labels.shoppingTitle}</div>
+          <strong>{labels.shoppingSubtitle}</strong>
+        </div>
+      </div>
+
+      <div className="diet-shopping-groups">
+        {groups.map((group) => (
+          <div className="diet-shopping-group" key={group.role}>
+            <div className="diet-shopping-group-head">
+              <span>{group.label}</span>
+              <b>{group.items.length}</b>
+            </div>
+            <div className="diet-shopping-list">
+              {group.items.map((item) => (
+                <div className={`diet-shopping-line ${item.role}`} key={item.name}>
+                  <span>{item.name}</span>
+                  <strong>{formatShoppingAmount(item.grams)}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="diet-shopping-summary">
+        <span>{labels.shoppingSummary}</span>
+        <span>{itemCount} {labels.shoppingItems}</span>
+        <strong>{formatShoppingAmount(totalGrams)} {labels.shoppingTotal}</strong>
+      </div>
+    </section>
   );
 }
 
@@ -350,6 +428,44 @@ function DietMealTile({
 function getFoodRoleClass(foodName: string): string {
   const food = getMealFoodOptions().find((item) => item.name === foodName);
   return food ? getMealFoodRole(food) : "";
+}
+
+function buildShoppingGroups(week: DietDay[], labels: Record<ShoppingRole, string>): ShoppingGroup[] {
+  const foodRoleByName = new Map(getMealFoodOptions().map((food) => [food.name, getMealFoodRole(food)]));
+  const ingredients = new Map<string, ShoppingIngredient>();
+
+  for (const day of week) {
+    for (const meal of day.meals) {
+      for (const item of meal.items) {
+        const role = foodRoleByName.get(item.name) ?? "plant";
+        const current = ingredients.get(item.name);
+        if (current) {
+          current.grams += item.grams;
+        } else {
+          ingredients.set(item.name, { name: item.name, grams: item.grams, role });
+        }
+      }
+    }
+  }
+
+  const orderedRoles: ShoppingRole[] = ["protein", "carb", "fat", "plant"];
+  return orderedRoles
+    .map((role) => ({
+      role,
+      label: labels[role],
+      items: [...ingredients.values()]
+        .filter((item) => item.role === role)
+        .sort((a, b) => b.grams - a.grams || a.name.localeCompare(b.name))
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+function formatShoppingAmount(grams: number): string {
+  if (grams >= 1000) {
+    const kilograms = grams / 1000;
+    return `${Number.isInteger(kilograms) ? kilograms.toFixed(0) : kilograms.toFixed(1)}kg`;
+  }
+  return `${Math.round(grams)}g`;
 }
 
 function applyOverridesToWeek(baseWeek: DietDay[], overrides: DietMealOverride[]): DietDay[] {

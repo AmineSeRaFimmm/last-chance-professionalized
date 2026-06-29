@@ -64,6 +64,126 @@
   line-height: 1.35;
 }
 
+.diet-shopping-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.diet-shopping-head strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.diet-shopping-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.diet-shopping-group {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(142, 142, 147, 0.36);
+}
+
+.diet-shopping-group:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.diet-shopping-group-head,
+.diet-shopping-line,
+.diet-shopping-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.diet-shopping-group-head span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.diet-shopping-group-head b {
+  min-width: 24px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #eef0f3;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1;
+  text-align: center;
+}
+
+.diet-shopping-list {
+  display: grid;
+  gap: 5px;
+}
+
+.diet-shopping-line {
+  min-height: 34px;
+  border-radius: 15px;
+  padding: 8px 10px;
+  background: rgba(245, 245, 247, 0.78);
+}
+
+.diet-shopping-line span {
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 720;
+  line-height: 1.2;
+}
+
+.diet-shopping-line strong {
+  flex: 0 0 auto;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+}
+
+.diet-shopping-line.protein strong {
+  color: #1d4ed8;
+}
+
+.diet-shopping-line.carb strong {
+  color: #047857;
+}
+
+.diet-shopping-line.fat strong {
+  color: #a16207;
+}
+
+.diet-shopping-line.plant strong {
+  color: #166534;
+}
+
+.diet-shopping-summary {
+  margin-top: auto;
+  border-radius: 18px;
+  padding: 11px 12px;
+  background: #101114;
+  color: #ffffff;
+}
+
+.diet-shopping-summary span,
+.diet-shopping-summary strong {
+  color: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .diet-day-head {
   display: flex;
   justify-content: space-between;
