@@ -300,11 +300,11 @@ export function WorkoutPlanner() {
         onPointerUp={handleWorkoutCarouselPointerUp}
         ref={workoutStackRef}
       >
-        <div className="workout-carousel-card workout-info-carousel-card" ref={activeWorkoutCardIndex === 0 ? activeWorkoutCardRef : undefined}>
+        <div className={`workout-carousel-card workout-info-carousel-card ${activeWorkoutCardIndex === 0 ? "is-active" : ""}`} ref={activeWorkoutCardIndex === 0 ? activeWorkoutCardRef : undefined}>
           <WorkoutInfoCard labels={t} language={language} plan={plan} />
         </div>
         {plan.days.map((day, index) => (
-          <div className="workout-carousel-card" ref={activeWorkoutCardIndex === index + 1 ? activeWorkoutCardRef : undefined} key={day.day}>
+          <div className={`workout-carousel-card ${activeWorkoutCardIndex === index + 1 ? "is-active" : ""}`} ref={activeWorkoutCardIndex === index + 1 ? activeWorkoutCardRef : undefined} key={day.day}>
             <WorkoutDayCard day={day} labels={t} language={language} onOpenGif={setSelectedGif} hideIntentIntensity={Boolean(customPlan)} />
           </div>
         ))}

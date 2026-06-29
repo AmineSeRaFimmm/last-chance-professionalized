@@ -155,10 +155,8 @@
 }
 
 .diet-shell > .card,
-.diet-week-stack > .diet-day-card,
 .workout-shell > .card,
 .workout-week-stack > .workout-day-card,
-.workout-carousel-card,
 .profile-shell > .card {
   opacity: 0;
   transform: translateY(18px) scale(0.985);
@@ -181,33 +179,23 @@
   animation-delay: 175ms;
 }
 
-.diet-week-stack > .diet-day-card:nth-child(1),
-.workout-week-stack > .workout-day-card:nth-child(1),
-.workout-carousel-card:nth-child(1) {
+.workout-week-stack > .workout-day-card:nth-child(1) {
   animation-delay: 130ms;
 }
 
-.diet-week-stack > .diet-day-card:nth-child(2),
-.workout-week-stack > .workout-day-card:nth-child(2),
-.workout-carousel-card:nth-child(2) {
+.workout-week-stack > .workout-day-card:nth-child(2) {
   animation-delay: 180ms;
 }
 
-.diet-week-stack > .diet-day-card:nth-child(3),
-.workout-week-stack > .workout-day-card:nth-child(3),
-.workout-carousel-card:nth-child(3) {
+.workout-week-stack > .workout-day-card:nth-child(3) {
   animation-delay: 230ms;
 }
 
-.diet-week-stack > .diet-day-card:nth-child(4),
-.workout-week-stack > .workout-day-card:nth-child(4),
-.workout-carousel-card:nth-child(4) {
+.workout-week-stack > .workout-day-card:nth-child(4) {
   animation-delay: 280ms;
 }
 
-.diet-week-stack > .diet-day-card:nth-child(n + 5),
-.workout-week-stack > .workout-day-card:nth-child(n + 5),
-.workout-carousel-card:nth-child(n + 5) {
+.workout-week-stack > .workout-day-card:nth-child(n + 5) {
   animation-delay: 330ms;
 }
 
@@ -215,6 +203,56 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+.diet-hero,
+.workout-hero,
+.diet-shell > .diet-note-card,
+.diet-week-stack,
+.workout-carousel-stack {
+  opacity: 0;
+  transform: translateY(14px);
+  will-change: opacity, transform;
+  animation: tab-region-enter 420ms var(--ease-ios) both;
+}
+
+.diet-shell > .diet-note-card {
+  animation-delay: 50ms;
+}
+
+.diet-week-stack,
+.workout-carousel-stack {
+  animation-delay: 90ms;
+}
+
+.diet-carousel-card,
+.workout-carousel-card {
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+
+.diet-carousel-card.is-active,
+.workout-carousel-card.is-active {
+  animation: active-carousel-settle 260ms var(--ease-ios) 120ms both;
+}
+
+@keyframes tab-region-enter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes active-carousel-settle {
+  from {
+    opacity: 0.96;
+    transform: scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -254,9 +292,13 @@
   }
 
   .diet-shell > .card,
-  .diet-week-stack > .diet-day-card,
   .workout-shell > .card,
   .workout-week-stack > .workout-day-card,
+  .diet-hero,
+  .workout-hero,
+  .diet-week-stack,
+  .workout-carousel-stack,
+  .diet-carousel-card,
   .workout-carousel-card,
   .profile-shell > .card {
     opacity: 1 !important;

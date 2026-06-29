@@ -79,6 +79,7 @@ export function DietPlanner() {
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const weekStackRef = useRef<HTMLDivElement | null>(null);
   const activeDayCardRef = useRef<HTMLDivElement | null>(null);
+  const didAlignInitialDayRef = useRef(false);
   const baseWeek = savedInput ? buildDietWeek(savedInput) : [];
   const week = savedInput ? applyOverridesToWeek(baseWeek, overrides) : [];
   const carouselCards = getCarouselCards(week, baseWeek, activeDayIndex);
@@ -91,7 +92,9 @@ export function DietPlanner() {
 
     window.requestAnimationFrame(() => {
       const paddingLeft = parseFloat(window.getComputedStyle(stack).paddingLeft) || 0;
-      stack.scrollTo({ left: activeDayCard.offsetLeft - stack.offsetLeft - paddingLeft, behavior: "smooth" });
+      const behavior: ScrollBehavior = didAlignInitialDayRef.current ? "smooth" : "auto";
+      stack.scrollTo({ left: activeDayCard.offsetLeft - stack.offsetLeft - paddingLeft, behavior });
+      didAlignInitialDayRef.current = true;
     });
   }, [activeDayIndex, hasSavedInput]);
 
@@ -181,7 +184,7 @@ export function DietPlanner() {
       >
         <DietInfoCard labels={t} />
         {carouselCards.map(({ baseDay, day, index, slot }) => (
-          <div className={`diet-carousel-card diet-carousel-card-${slot}`} key={`${day.day}-${index}`} ref={index === activeDayIndex ? activeDayCardRef : undefined}>
+          <div className={`diet-carousel-card diet-carousel-card-${slot} ${index === activeDayIndex ? "is-active" : ""}`} key={`${day.day}-${index}`} ref={index === activeDayIndex ? activeDayCardRef : undefined}>
             <DietDayCard
               baseDay={baseDay}
               day={day}
