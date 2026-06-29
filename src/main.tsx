@@ -2,13 +2,11 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import Root from "./Root";
 import { installNumericInputGuard } from "./core/numericInputGuard";
-import { installProjectionWheel } from "./core/projectionWheel";
 import { startStartupGifPreload } from "./core/startupGifPreloader";
 import "./styles/global.css";
 import "./styles/progress.css";
 import "./styles/navigation.css";
 import "./styles/custom-workout.css";
-import "./styles/projection.css";
 import "./styles/diet.css";
 import "./styles/diet-selector.css";
 import "./styles/timeline.css";
@@ -22,7 +20,6 @@ import "./styles/professional-ui.css";
 import "./core/interactionMotion";
 
 installNumericInputGuard();
-installProjectionWheel();
 startStartupGifPreload();
 
 const rootElement = document.getElementById("root");

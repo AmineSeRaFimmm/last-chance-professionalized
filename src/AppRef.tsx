@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PlanChoiceCard } from "./components/PlanChoiceCard";
 import { TuneNumbersStep } from "./components/TuneNumbersStep";
 import { WeeklyStructureCard } from "./components/WeeklyStructureCard";
@@ -79,7 +79,6 @@ export default function AppRef() {
     return buildStandardPlan(input);
   }, [sex, effectivePlanType, age, heightCm, weightKg, targetWeightKg, expectedTimelineWeeks, activityFactor, trainingDaysPerWeek, goalRatePctPerWeek, proteinFactor]);
 
-  const projection = useMemo(() => buildTimelineProjection(weightKg, result.weeklyLossKg, targetWeightKg, expectedTimelineWeeks), [weightKg, result.weeklyLossKg, targetWeightKg, expectedTimelineWeeks]);
   const setupStepIndex = setupStage === "plan" ? 1 : setupStage === "body" ? 2 : setupStage === "review" ? 3 : 0;
   const targetLabel = targetWeightKg === undefined ? t.notSet : `${targetWeightKg.toFixed(1)} kg`;
   const coreCalories = result.kind === "standard" ? `${result.daily.calories} kcal` : `${result.weeklyCalories} kcal/week`;
@@ -277,14 +276,6 @@ export default function AppRef() {
           </section>
           {result.kind === "carbCycling" && <WeeklyStructureCard result={result} labels={t} language={language} />}
           <section className="card plan-home-status-card dashboard-reveal reveal-4"><div className="card-title">{t.status}</div><TimelineRiskPanel risk={timelineRisk} /></section>
-          <TimelineProjectionCard
-            currentWeightKg={weightKg}
-            expectedTimelineWeeks={expectedTimelineWeeks}
-            labels={t}
-            language={language}
-            rows={projection}
-            targetLabel={targetLabel}
-          />
           <section className="card dashboard-reveal reveal-6"><div className="card-title">{t.execution}</div><p className="small-note">{sex === "female" ? t.femaleRules : result.kind === "carbCycling" ? t.carbRules : t.standardRules}</p></section>
           {result.warnings.length > 0 && <section className="card dashboard-reveal reveal-7"><div className="card-title">{t.safety}</div>{result.warnings.map((warning) => <div className="warning" key={warning}>{warning}</div>)}</section>}
         </div>
@@ -365,157 +356,6 @@ function MacroBars({ data, labels }: { data: MacroResult; labels: AppCopy }) {
   );
 }
 
-function TimelineProjectionCard({
-  currentWeightKg,
-  expectedTimelineWeeks,
-  labels,
-  language,
-  rows,
-  targetLabel
-}: {
-  currentWeightKg: number;
-  expectedTimelineWeeks: number;
-  labels: AppCopy;
-  language: Language;
-  rows: Array<{ week: number; weightKg: number }>;
-  targetLabel: string;
-}) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
-  const safeIndex = Math.min(Math.max(selectedIndex, 0), Math.max(0, rows.length - 1));
-  const selected = rows[safeIndex] ?? rows[0];
-  const previous = rows[Math.max(0, safeIndex - 1)];
-  const next = rows[Math.min(rows.length - 1, safeIndex + 1)];
-  const progress = rows.length <= 1 ? 100 : (safeIndex / (rows.length - 1)) * 100;
-  const totalLoss = selected ? currentWeightKg - selected.weightKg : 0;
-  const copy = projectionCopy[language];
-
-  useEffect(() => {
-    setSelectedIndex((current) => Math.min(current, Math.max(0, rows.length - 1)));
-  }, [rows.length]);
-
-  function moveSelected(direction: number) {
-    setSelectedIndex((current) => Math.min(Math.max(current + direction, 0), Math.max(0, rows.length - 1)));
-  }
-
-  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    swipeStartRef.current = { x: event.clientX, y: event.clientY };
-  }
-
-  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
-    const start = swipeStartRef.current;
-    swipeStartRef.current = null;
-    if (!start) return;
-
-    const deltaX = event.clientX - start.x;
-    const deltaY = event.clientY - start.y;
-    const isHorizontalSwipe = Math.abs(deltaX) >= 28 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2;
-    if (isHorizontalSwipe) moveSelected(deltaX < 0 ? 1 : -1);
-  }
-
-  if (!selected) return null;
-
-  return (
-    <section className="card dashboard-reveal reveal-5 projection-card">
-      <div className="section-head">
-        <div>
-          <div className="card-title">{labels.projection}</div>
-          <h2>{targetLabel}</h2>
-        </div>
-        <span>{expectedTimelineWeeks} wk</span>
-      </div>
-
-      <ProjectionPreview rows={rows.slice(0, 8)} activeIndex={safeIndex} />
-
-      <div
-        className="projection-track-card"
-        onPointerCancel={() => { swipeStartRef.current = null; }}
-        onPointerDown={handlePointerDown}
-        onPointerLeave={() => { swipeStartRef.current = null; }}
-        onPointerUp={handlePointerUp}
-      >
-        <div className="projection-track-head">
-          <span>{copy.start} {currentWeightKg.toFixed(1)} kg</span>
-          <span>{copy.target} {targetLabel}</span>
-        </div>
-        <div className="projection-track" aria-label={copy.timeline}>
-          <i aria-hidden="true"><b style={{ width: `${progress}%` }} /></i>
-          <div className="projection-week-dots">
-            {rows.map((row, index) => (
-              <button
-                className={index === safeIndex ? "active" : ""}
-                type="button"
-                aria-label={`${labels.week} ${row.week}`}
-                onClick={() => setSelectedIndex(index)}
-                key={row.week}
-              />
-            ))}
-          </div>
-        </div>
-        <div className="projection-focus-inline">
-          <button type="button" aria-label={copy.previous} onClick={() => moveSelected(-1)} disabled={safeIndex === 0}>‹</button>
-          <div>
-            <span>{labels.week} {selected.week}</span>
-            <strong>{selected.weightKg.toFixed(2)} kg</strong>
-            <em>{totalLoss > 0 ? `-${totalLoss.toFixed(2)} kg ${copy.fromStart}` : copy.startPoint}</em>
-          </div>
-          <button type="button" aria-label={copy.next} onClick={() => moveSelected(1)} disabled={safeIndex >= rows.length - 1}>›</button>
-        </div>
-      </div>
-
-      <div className="projection-peek-list">
-        {[previous, selected, next].filter((row, index, list) => row && list.findIndex((item) => item?.week === row.week) === index).map((row) => (
-          <div className={row.week === selected.week ? "active" : ""} key={row.week}>
-            <span>{labels.week} {row.week}</span>
-            <strong>{row.weightKg.toFixed(2)} kg</strong>
-          </div>
-        ))}
-      </div>
-
-      <p className="small-note">{labels.projectionNote}</p>
-    </section>
-  );
-}
-
-const projectionCopy = {
-  en: {
-    start: "Start",
-    target: "Target",
-    timeline: "Timeline projection",
-    previous: "Previous week",
-    next: "Next week",
-    fromStart: "from start",
-    startPoint: "Start point"
-  },
-  zh: {
-    start: "起点",
-    target: "目标",
-    timeline: "目标时间预测",
-    previous: "上一周",
-    next: "下一周",
-    fromStart: "较起点",
-    startPoint: "起点"
-  }
-} as const;
-
-function ProjectionPreview({ rows, activeIndex }: { rows: Array<{ week: number; weightKg: number }>; activeIndex: number }) {
-  if (rows.length === 0) return null;
-  const weights = rows.map((row) => row.weightKg);
-  const max = Math.max(...weights);
-  const min = Math.min(...weights);
-  const range = Math.max(0.1, max - min);
-
-  return (
-    <div className="projection-preview" aria-hidden="true">
-      {rows.map((row, index) => {
-        const height = 26 + ((row.weightKg - min) / range) * 58;
-        return <i className={index === Math.min(activeIndex, rows.length - 1) ? "active" : ""} key={row.week} style={{ height: `${height}px` }} />;
-      })}
-    </div>
-  );
-}
-
 function buildTimelineRisk(currentWeightKg: number, targetWeightKg: number | undefined, expectedTimelineWeeks: number, labels: AppCopy): TimelineRisk {
   if (!Number.isFinite(currentWeightKg) || !Number.isFinite(expectedTimelineWeeks)) return { status: "empty", title: labels.riskSetTarget, detail: labels.riskSetTargetDetail, blocked: false };
   if (targetWeightKg === undefined || !Number.isFinite(targetWeightKg)) return { status: "empty", title: labels.riskSetTarget, detail: labels.riskSetTargetDetail, blocked: false };
@@ -535,18 +375,4 @@ function buildTimelineRisk(currentWeightKg: number, targetWeightKg: number | und
   if (weeklyRate > 0.01) return { status: "aggressive", title: labels.riskAggressive, detail, blocked: false, planRate };
   if (weeklyRate >= 0.005) return { status: "standard", title: labels.riskStandard, detail, blocked: false, planRate };
   return { status: "safe", title: labels.riskSafe, detail, blocked: false, planRate };
-}
-
-function buildTimelineProjection(currentWeightKg: number, weeklyLossKg: number, targetWeightKg: number | undefined, expectedTimelineWeeks: number) {
-  const hasWeightTarget = Number.isFinite(targetWeightKg) && targetWeightKg !== undefined && targetWeightKg < currentWeightKg;
-  const totalWeeks = hasWeightTarget ? Math.min(MAX_TIMELINE_WEEKS, Math.max(MIN_TIMELINE_WEEKS, Math.round(expectedTimelineWeeks))) : DEFAULT_TIMELINE_WEEKS;
-  const target = hasWeightTarget ? targetWeightKg : undefined;
-  const projectionWeeklyLossKg = target !== undefined ? (currentWeightKg - target) / totalWeeks : weeklyLossKg;
-
-  return Array.from({ length: totalWeeks }, (_, index) => {
-    const week = index + 1;
-    const rawWeight = currentWeightKg - projectionWeeklyLossKg * week;
-    const weightKg = target !== undefined ? Math.max(rawWeight, target) : rawWeight;
-    return { week, weightKg };
-  });
 }

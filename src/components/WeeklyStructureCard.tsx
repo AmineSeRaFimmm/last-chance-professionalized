@@ -32,7 +32,7 @@ const copy = {
     training: "Training",
     done: "Done",
     reset: "Reset",
-    helper: "Swipe carb column to rotate the cycle. Dates stay fixed.",
+    helper: "Press and hold the carb column, then drag up or down. Dates stay fixed.",
     high: "High",
     medium: "Medium",
     low: "Low",
@@ -57,7 +57,7 @@ const copy = {
     training: "训练部位",
     done: "完成",
     reset: "重置",
-    helper: "上下滑动碳水列来平移循环顺序，日期固定不变。",
+    helper: "长按碳水列后上下拖动来平移循环顺序，日期固定不变。",
     high: "高碳",
     medium: "中碳",
     low: "低碳",
@@ -96,12 +96,17 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [offset, setOffset] = useState(() => loadCarbRotationOffset());
   const [focusByDay, setFocusByDay] = useState<FocusByDay>(() => loadTrainingFocusByDay());
+  const [draftOffset, setDraftOffset] = useState(offset);
+  const [draftFocusByDay, setDraftFocusByDay] = useState<FocusByDay>(focusByDay);
   const [activeFocusDay, setActiveFocusDay] = useState<string | null>(null);
-  const [savedPulse, setSavedPulse] = useState(false);
+  const [carbDragActive, setCarbDragActive] = useState(false);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const longPressTimerRef = useRef<number | null>(null);
 
   const rows = useMemo(() => buildRows(result, offset, focusByDay), [result, offset, focusByDay]);
+  const draftRows = useMemo(() => buildRows(result, draftOffset, draftFocusByDay), [result, draftOffset, draftFocusByDay]);
   const carbSummary = useMemo(() => buildCarbSummary(rows, language), [rows, language]);
+  const draftCarbSummary = useMemo(() => buildCarbSummary(draftRows, language), [draftRows, language]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -110,56 +115,91 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
   }, [adjustOpen]);
 
   useEffect(() => {
-    if (!savedPulse) return;
-    const timer = window.setTimeout(() => setSavedPulse(false), 900);
-    return () => window.clearTimeout(timer);
-  }, [savedPulse]);
+    return () => clearLongPressTimer();
+  }, []);
 
-  function rotateCycle(direction: number) {
-    setOffset((current) => {
-      const next = current + direction;
-      saveCarbRotationOffset(next);
-      return next;
-    });
-    setSavedPulse(true);
+  function openAdjust() {
+    setDraftOffset(offset);
+    setDraftFocusByDay(focusByDay);
+    setActiveFocusDay(null);
+    setAdjustOpen(true);
+  }
+
+  function closeAdjustWithoutSaving() {
+    clearLongPressTimer();
+    setCarbDragActive(false);
+    setActiveFocusDay(null);
+    setDraftOffset(offset);
+    setDraftFocusByDay(focusByDay);
+    setAdjustOpen(false);
+  }
+
+  function saveDraftAndClose() {
+    saveCarbRotationOffset(draftOffset);
+    saveTrainingFocusByDay(draftFocusByDay);
+    setOffset(draftOffset);
+    setFocusByDay(draftFocusByDay);
+    setActiveFocusDay(null);
+    setCarbDragActive(false);
+    setAdjustOpen(false);
+  }
+
+  function rotateDraftCycle(direction: number) {
+    setDraftOffset((current) => current + direction);
+  }
+
+  function clearLongPressTimer() {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
   }
 
   function handleCarbPointerDown(event: PointerEvent<HTMLButtonElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     swipeStartRef.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture?.(event.pointerId);
+    clearLongPressTimer();
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressTimerRef.current = null;
+      setCarbDragActive(true);
+    }, 280);
   }
 
-  function handleCarbPointerUp(event: PointerEvent<HTMLButtonElement>) {
+  function handleCarbPointerMove(event: PointerEvent<HTMLButtonElement>) {
     const start = swipeStartRef.current;
-    swipeStartRef.current = null;
     if (!start) return;
 
     const deltaX = event.clientX - start.x;
     const deltaY = event.clientY - start.y;
-    const isVerticalSwipe = Math.abs(deltaY) >= 24 && Math.abs(deltaY) > Math.abs(deltaX) * 1.2;
-    if (!isVerticalSwipe) return;
 
-    rotateCycle(deltaY < 0 ? 1 : -1);
+    if (!carbDragActive) {
+      if (Math.hypot(deltaX, deltaY) > 8) clearLongPressTimer();
+      return;
+    }
+
+    const isVerticalDrag = Math.abs(deltaY) >= 30 && Math.abs(deltaY) > Math.abs(deltaX) * 1.15;
+    if (!isVerticalDrag) return;
+
+    rotateDraftCycle(deltaY < 0 ? 1 : -1);
+    swipeStartRef.current = { x: event.clientX, y: event.clientY };
+  }
+
+  function finishCarbPointer() {
+    clearLongPressTimer();
+    swipeStartRef.current = null;
+    setCarbDragActive(false);
   }
 
   function handleFocusChange(day: string, focus: TrainingFocusKey) {
-    setFocusByDay((current) => {
-      const next = { ...current, [day]: focus };
-      saveTrainingFocusByDay(next);
-      return next;
-    });
+    setDraftFocusByDay((current) => ({ ...current, [day]: focus }));
     setActiveFocusDay(null);
-    setSavedPulse(true);
   }
 
   function handleReset() {
-    saveCarbRotationOffset(0);
-    saveTrainingFocusByDay({});
-    setOffset(0);
-    setFocusByDay({});
+    setDraftOffset(0);
+    setDraftFocusByDay({});
     setActiveFocusDay(null);
-    setSavedPulse(true);
   }
 
   return (
@@ -171,7 +211,7 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
             <strong>{carbSummary}</strong>
             <p className="small-note no-margin">{t.helper}</p>
           </div>
-          <button className="adjust-button" type="button" onClick={() => setAdjustOpen(true)}>{t.adjust}</button>
+          <button className="adjust-button" type="button" onClick={openAdjust}>{t.adjust}</button>
         </div>
 
         <div className="weekly-structure-grid" aria-label={labels.weeklyStructure}>
@@ -191,36 +231,31 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
 
       {adjustOpen && (
         <div className="weekly-adjust-overlay" role="dialog" aria-modal="true" aria-label={labels.weeklyStructure}>
-          <button className="weekly-adjust-backdrop" type="button" aria-label={t.done} onClick={() => { setActiveFocusDay(null); setAdjustOpen(false); }} />
+          <button className="weekly-adjust-backdrop" type="button" aria-label={t.done} onClick={closeAdjustWithoutSaving} />
           <section className="weekly-adjust-modal">
             <div className="weekly-adjust-modal-header">
               <div>
                 <strong>{labels.weeklyStructure}</strong>
-                <span>{savedPulse ? (language === "zh" ? "已保存" : "Saved") : t.helper}</span>
+                <span>{t.helper}</span>
               </div>
-              <button className="weekly-adjust-done" type="button" onClick={() => { setActiveFocusDay(null); setAdjustOpen(false); }}>{t.done}</button>
+              <button className="weekly-adjust-done" type="button" onClick={saveDraftAndClose}>{t.done}</button>
             </div>
 
-            <div className="weekly-shift-control" aria-label={language === "zh" ? "调整碳水循环" : "Adjust carb cycle"}>
-              <button type="button" onClick={() => rotateCycle(-1)}>{language === "zh" ? "后移" : "Later"}</button>
-              <span>{carbSummary}</span>
-              <button type="button" onClick={() => rotateCycle(1)}>{language === "zh" ? "前移" : "Earlier"}</button>
-            </div>
-
-            <div className="weekly-adjust-grid">
+            <div className={`weekly-adjust-grid ${carbDragActive ? "is-carb-dragging" : ""}`}>
               <span>{t.date}</span>
               <span>{t.carb}</span>
               <span>{t.training}</span>
-              {rows.map((row) => (
+              {draftRows.map((row) => (
                 <div className="weekly-adjust-row-fragment" key={row.day}>
                   <span className="weekly-date-cell">{row.day}</span>
                   <button
                     className={`weekly-carb-cell ${row.carbType.toLowerCase()}`}
                     type="button"
-                    onPointerCancel={() => { swipeStartRef.current = null; }}
+                    aria-label={`${t.carb} ${row.day}. ${language === "zh" ? "长按后上下拖动调整循环。" : "Press and hold, then drag up or down to rotate the cycle."}`}
+                    onPointerCancel={finishCarbPointer}
                     onPointerDown={handleCarbPointerDown}
-                    onPointerLeave={() => { swipeStartRef.current = null; }}
-                    onPointerUp={handleCarbPointerUp}
+                    onPointerMove={handleCarbPointerMove}
+                    onPointerUp={finishCarbPointer}
                   >
                     {formatCarbType(row.carbType, language)}
                   </button>
@@ -232,9 +267,8 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
             </div>
 
             <div className="weekly-adjust-tools">
+              <span>{draftCarbSummary}</span>
               <button type="button" onClick={handleReset}>{t.reset}</button>
-              <button type="button" onClick={() => rotateCycle(-1)}>{language === "zh" ? "下移循环" : "Shift down"}</button>
-              <button type="button" onClick={() => rotateCycle(1)}>{language === "zh" ? "上移循环" : "Shift up"}</button>
             </div>
 
             {activeFocusDay && (
@@ -248,7 +282,7 @@ export function WeeklyStructureCard({ result, labels, language }: WeeklyStructur
                   <div className="weekly-focus-options">
                     {focusOptions.map((focus) => (
                       <button
-                        className={rows.find((row) => row.day === activeFocusDay)?.focus === focus ? "active" : ""}
+                        className={draftRows.find((row) => row.day === activeFocusDay)?.focus === focus ? "active" : ""}
                         type="button"
                         onClick={() => handleFocusChange(activeFocusDay, focus)}
                         key={focus}
