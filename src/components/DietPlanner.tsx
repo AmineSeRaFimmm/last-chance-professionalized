@@ -10,6 +10,7 @@ import { MealComposerOverlay } from "./MealComposerOverlay";
 type Language = "en" | "zh";
 type CarouselSlot = "prev" | "current" | "next";
 type DietTemplate = "meals" | "prep";
+const DIET_TEMPLATE_KEY = "last_chance_diet_template";
 
 interface ComposerState {
   dayLabel: string;
@@ -127,7 +128,7 @@ export function DietPlanner() {
   const [prepOverrides, setPrepOverrides] = useState<DietPrepOverride[]>(loadDietPrepOverrides);
   const [composer, setComposer] = useState<ComposerState | null>(null);
   const [activeDayIndex, setActiveDayIndex] = useState(getTodayWeekIndex);
-  const [dietTemplate, setDietTemplate] = useState<DietTemplate>("meals");
+  const [dietTemplate, setDietTemplate] = useState<DietTemplate>(loadDietTemplate);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const weekStackRef = useRef<HTMLDivElement | null>(null);
   const activeDayCardRef = useRef<HTMLDivElement | null>(null);
@@ -158,7 +159,7 @@ export function DietPlanner() {
         <section className="hero diet-hero">
           <div className="hero-topline">
             <p className="eyebrow">{t.title}</p>
-            <DietTemplateToggle labels={t} template={dietTemplate} onChange={setDietTemplate} />
+            <DietTemplateToggle labels={t} template={dietTemplate} onChange={handleTemplateChange} />
           </div>
           <h1 className="hero-title">Diet</h1>
           <p className="hero-subtitle">{t.subtitle}</p>
@@ -207,6 +208,11 @@ export function DietPlanner() {
     });
   }
 
+  function handleTemplateChange(template: DietTemplate) {
+    saveDietTemplate(template);
+    setDietTemplate(template);
+  }
+
   function handleApply(foodNames: string[]) {
     if (!composer) return;
     if (composer.mode === "prep") {
@@ -224,7 +230,7 @@ export function DietPlanner() {
       <section className="hero diet-hero">
         <div className="hero-topline">
           <p className="eyebrow">{t.title}</p>
-          <DietTemplateToggle labels={t} template={dietTemplate} onChange={setDietTemplate} />
+          <DietTemplateToggle labels={t} template={dietTemplate} onChange={handleTemplateChange} />
         </div>
         <h1 className="hero-title">Diet</h1>
         <p className="hero-subtitle">{t.subtitle}</p>
@@ -602,4 +608,13 @@ function normalizeDayIndex(index: number, length: number): number {
 function loadLanguage(): Language {
   if (typeof window === "undefined") return "en";
   return window.localStorage.getItem("last_chance_language") === "zh" ? "zh" : "en";
+}
+
+function loadDietTemplate(): DietTemplate {
+  if (typeof window === "undefined") return "meals";
+  return window.localStorage.getItem(DIET_TEMPLATE_KEY) === "prep" ? "prep" : "meals";
+}
+
+function saveDietTemplate(template: DietTemplate): void {
+  window.localStorage.setItem(DIET_TEMPLATE_KEY, template);
 }
