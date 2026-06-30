@@ -151,9 +151,8 @@ export function buildDietWeek(input: UserInput): DietDay[] {
 
   if (result.kind === "carbCycling") {
     const adjustedSchedule = applyCarbRotation(result.weeklySchedule, loadCarbRotationOffset());
-    const templates = buildCarbDietTemplates(result);
 
-    return adjustedSchedule.map((schedule) => cloneDietDay(schedule.day, templates[schedule.type]));
+    return adjustedSchedule.map((schedule, index) => buildBestDietTemplate(schedule.day, schedule.type, getCarbTarget(result, schedule.type), index));
   }
 
   return DAYS.map((day, index) => buildDietDay(day, "Standard", result.daily, index));
@@ -177,39 +176,10 @@ function applyCarbRotation<T extends { type: CarbDietType }>(schedule: T[], offs
   }));
 }
 
-function buildCarbDietTemplates(result: Extract<PlanResult, { kind: "carbCycling" }>): Record<CarbDietType, DietDay> {
-  return {
-    High: buildBestDietTemplate("High", result.highDay),
-    Medium: buildBestDietTemplate("Medium", result.mediumDay),
-    Low: buildBestDietTemplate("Low", result.lowDay)
-  };
-}
-
-function buildBestDietTemplate(type: CarbDietType, target: MacroResult): DietDay {
+function buildBestDietTemplate(day: string, type: CarbDietType, target: MacroResult, dayIndex: number): DietDay {
   return TEMPLATE_CANDIDATE_SEEDS
-    .map((seed) => buildDietDay(type, type, target, seed))
+    .map((seed) => buildDietDay(day, type, target, dayIndex * TEMPLATE_CANDIDATE_SEEDS.length + seed))
     .reduce((best, candidate) => scoreMacroDistance(candidate.totals, target) < scoreMacroDistance(best.totals, target) ? candidate : best);
-}
-
-function cloneDietDay(day: string, template: DietDay): DietDay {
-  return {
-    day,
-    type: template.type,
-    target: { ...template.target },
-    meals: template.meals.map(cloneMeal),
-    totals: { ...template.totals }
-  };
-}
-
-function cloneMeal(meal: DietMeal): DietMeal {
-  return {
-    name: meal.name,
-    items: meal.items.map((item) => ({ ...item })),
-    calories: meal.calories,
-    proteinG: meal.proteinG,
-    carbsG: meal.carbsG,
-    fatG: meal.fatG
-  };
 }
 
 function scoreMacroDistance(macro: MacroResult, target: MacroResult): number {

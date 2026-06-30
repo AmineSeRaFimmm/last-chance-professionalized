@@ -510,8 +510,12 @@
   position: relative;
   z-index: 2;
   width: min(70vw, 300px);
+  height: min(50vh, 380px);
   max-height: min(50vh, 380px);
-  overflow: auto;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 8px;
+  overflow: hidden;
   border: 0;
   border-radius: 28px;
   padding: 12px;
@@ -528,12 +532,19 @@
 }
 
 .meal-selected-zone {
-  min-height: 132px;
+  min-height: 0;
+  overflow: auto;
   border: 1px dashed rgba(110, 110, 115, 0.28);
   border-radius: 22px;
   padding: 13px;
   background: transparent;
   backdrop-filter: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.meal-selected-zone::-webkit-scrollbar {
+  display: none;
 }
 
 .meal-selected-list {
