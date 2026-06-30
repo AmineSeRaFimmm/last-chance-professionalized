@@ -3,8 +3,8 @@ import { buildDietWeek } from "../core/dietPlan";
 import type { DietDay, DietMeal } from "../core/dietPlan";
 import { getMealFoodOptions, getMealFoodRole, optimizeMealFromFoodNames, sumDietMeals } from "../core/mealOptimizer";
 import { loadInput } from "../storage/localPlan";
-import { findMealOverride, loadDietOverrides, saveMealOverride } from "../storage/dietOverrides";
-import type { DietMealOverride } from "../storage/dietOverrides";
+import { findDietPrepOverride, findMealOverride, loadDietOverrides, loadDietPrepOverrides, saveDietPrepOverride, saveMealOverride } from "../storage/dietOverrides";
+import type { DietMealOverride, DietPrepOverride } from "../storage/dietOverrides";
 import { MealComposerOverlay } from "./MealComposerOverlay";
 
 type Language = "en" | "zh";
@@ -124,6 +124,7 @@ export function DietPlanner() {
   const savedInput = loadInput();
   const hasSavedInput = Boolean(savedInput);
   const [overrides, setOverrides] = useState<DietMealOverride[]>(loadDietOverrides);
+  const [prepOverrides, setPrepOverrides] = useState<DietPrepOverride[]>(loadDietPrepOverrides);
   const [composer, setComposer] = useState<ComposerState | null>(null);
   const [activeDayIndex, setActiveDayIndex] = useState(getTodayWeekIndex);
   const [dietTemplate, setDietTemplate] = useState<DietTemplate>("meals");
@@ -132,7 +133,9 @@ export function DietPlanner() {
   const activeDayCardRef = useRef<HTMLDivElement | null>(null);
   const didAlignInitialDayRef = useRef(false);
   const baseWeek = savedInput ? buildDietWeek(savedInput) : [];
-  const week = savedInput ? applyOverridesToWeek(baseWeek, overrides) : [];
+  const mealsWeek = savedInput ? applyOverridesToWeek(baseWeek, overrides) : [];
+  const prepWeek = savedInput ? buildPrepWeek(baseWeek, prepOverrides, t.mealPrepTitle) : [];
+  const week = dietTemplate === "prep" ? prepWeek : mealsWeek;
   const carouselCards = getCarouselCards(week, baseWeek, activeDayIndex);
 
   useEffect(() => {
@@ -206,10 +209,13 @@ export function DietPlanner() {
 
   function handleApply(foodNames: string[]) {
     if (!composer) return;
-    const next = composer.mode === "prep"
-      ? saveMealPrepOverrides(composer.dayLabel, baseWeek.find((day) => day.day === composer.dayLabel)?.meals ?? [], foodNames)
-      : saveMealOverride({ day: composer.dayLabel, mealName: composer.baseMeal.name, foodNames });
-    setOverrides(next);
+    if (composer.mode === "prep") {
+      const next = saveDietPrepOverride({ day: composer.dayLabel, foodNames });
+      setPrepOverrides(next);
+    } else {
+      const next = saveMealOverride({ day: composer.dayLabel, mealName: composer.baseMeal.name, foodNames });
+      setOverrides(next);
+    }
     setComposer(null);
   }
 
@@ -352,7 +358,7 @@ function DietDayCard({
   labels: typeof copy.en | typeof copy.zh;
   onMealOpen: (baseMeal: DietMeal, meal: DietMeal, mode?: DietTemplate) => void;
 }) {
-  const mealPrep = buildMealPrepMeal(day, labels.mealPrepTitle);
+  const mealPrep = day.meals[0] ?? buildMealPrepMeal(day, labels.mealPrepTitle);
   const baseMealPrep = buildMealPrepMeal(baseDay, labels.mealPrepTitle);
 
   return (
@@ -521,13 +527,6 @@ function formatShoppingAmount(grams: number): string {
   return `${Math.round(grams)}g`;
 }
 
-function saveMealPrepOverrides(dayLabel: string, baseMeals: DietMeal[], foodNames: string[]): DietMealOverride[] {
-  return baseMeals.reduce(
-    (_current, meal) => saveMealOverride({ day: dayLabel, mealName: meal.name, foodNames }),
-    loadDietOverrides()
-  );
-}
-
 function buildMealPrepMeal(day: DietDay, name: string): DietMeal {
   const itemGrams = new Map<string, number>();
 
@@ -550,6 +549,20 @@ function buildMealPrepMeal(day: DietDay, name: string): DietMeal {
     carbsG: day.totals.carbsG,
     fatG: day.totals.fatG
   };
+}
+
+function buildPrepWeek(baseWeek: DietDay[], overrides: DietPrepOverride[], mealName: string): DietDay[] {
+  return baseWeek.map((day) => {
+    const basePrepMeal = buildMealPrepMeal(day, mealName);
+    const override = findDietPrepOverride(overrides, day.day);
+    const prepMeal = override ? optimizeMealFromFoodNames(mealName, day.target, override.foodNames).meal : basePrepMeal;
+
+    return {
+      ...day,
+      meals: [prepMeal],
+      totals: sumDietMeals([prepMeal])
+    };
+  });
 }
 
 function roleSortValue(role: string): number {
