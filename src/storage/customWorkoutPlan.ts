@@ -1,4 +1,5 @@
 import type { WorkoutDay, WorkoutExercise, WorkoutPlan, WorkoutProgramOption } from "../core/workoutPlan";
+import type { FocusByDay, TrainingFocusKey } from "./weeklyStructurePreferences";
 
 export interface CustomWorkoutExercise extends WorkoutExercise {
   sourceId?: string;
@@ -64,13 +65,14 @@ export function clearCustomWorkoutPlan(): void {
   window.localStorage.removeItem(CUSTOM_WORKOUT_KEY);
 }
 
-export function customWorkoutToWorkoutPlan(plan: CustomWorkoutPlanData): WorkoutPlan {
+export function customWorkoutToWorkoutPlan(plan: CustomWorkoutPlanData, focusByDay: FocusByDay = {}): WorkoutPlan {
   const days: WorkoutDay[] = plan.days.map((day) => {
     const hasExercises = day.exercises.length > 0;
+    const focus = focusByDay[day.day] ?? (hasExercises ? "strength" : "rest");
     return {
       day: day.day,
-      title: hasExercises ? "Custom Training" : "Rest / Build Day",
-      focus: hasExercises ? "fullBody" : "rest",
+      title: hasExercises ? titleForWeeklyFocus(focus) : "Rest / Build Day",
+      focus,
       intent: hasExercises ? "User-defined session" : "Add exercises in Custom Plan.",
       duration: hasExercises ? `${day.exercises.length} exercises` : "Custom",
       intensity: "Custom",
@@ -89,4 +91,18 @@ export function customWorkoutToWorkoutPlan(plan: CustomWorkoutPlanData): Workout
       "Steps and low-intensity cardio are the default conditioning tools."
     ]
   };
+}
+
+function titleForWeeklyFocus(focus: TrainingFocusKey): string {
+  if (focus === "heavyLegs") return "Legs / Lower";
+  if (focus === "backDeadlift") return "Back / Deadlift";
+  if (focus === "upperBody") return "Upper Body";
+  if (focus === "push") return "Push / Chest";
+  if (focus === "pull") return "Pull / Back";
+  if (focus === "fullBody") return "Full Body";
+  if (focus === "strength") return "Strength";
+  if (focus === "accessoryCardio") return "Accessory + Cardio";
+  if (focus === "lightCardio") return "Light Cardio";
+  if (focus === "walkRecovery") return "Walk / Recovery";
+  return "Rest";
 }

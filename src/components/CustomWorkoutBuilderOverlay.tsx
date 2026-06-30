@@ -44,6 +44,7 @@ interface ActiveReorder {
 interface SelectedBuilderGif {
   title: string;
   gifUrl: string;
+  previewUrl: string;
   sourceName: string;
 }
 
@@ -240,6 +241,10 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
   }, [exercises]);
 
   useEffect(() => {
+    warmImageCache(exercises.map((exercise) => exercise.gifUrl), 8);
+  }, [exercises]);
+
+  useEffect(() => {
     const list = exerciseListRef.current;
     if (!list) return;
 
@@ -298,7 +303,7 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
     setActiveDrag({ exercise, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, moved: false });
   }
 
-  function startReorder(event: ReactPointerEvent<HTMLSpanElement>, dayIndex: number, fromIndex: number, label: string) {
+  function startReorder(event: ReactPointerEvent<HTMLElement>, dayIndex: number, fromIndex: number, label: string) {
     if (activeDayIndex === null) return;
     const now = window.performance.now();
     const lastTap = lastPillTapRef.current;
@@ -321,7 +326,7 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
 
   function openGif(exercise: CustomCatalogExercise) {
     void preloadImage(exercise.gifUrl);
-    setSelectedGif({ title: exercise.name, gifUrl: exercise.gifUrl, sourceName: exercise.name });
+    setSelectedGif({ title: exercise.name, gifUrl: exercise.gifUrl, previewUrl: exercise.thumbUrl ?? exercise.gifUrl, sourceName: exercise.name });
   }
 
   function handleBack() {
@@ -369,9 +374,8 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
                       className={activeDayIndex !== null ? "removable sortable" : ""}
                       data-custom-exercise-index={exerciseIndex}
                       key={`${day.day}-${exercise.name}-${exerciseIndex}`}
-                      onPointerDown={activeDayIndex !== null ? (event) => startReorder(event, dayIndex, exerciseIndex, exercise.name) : undefined}
                     >
-                      {activeDayIndex !== null && <b>{exerciseIndex + 1}</b>}
+                      {activeDayIndex !== null && <b onPointerDown={(event) => startReorder(event, dayIndex, exerciseIndex, exercise.name)}>{exerciseIndex + 1}</b>}
                       {exercise.name}
                     </span>
                   ))}
@@ -451,8 +455,18 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
 }
 
 function CustomBuilderGifOverlay({ gif, labels, onClose }: { gif: SelectedBuilderGif; labels: typeof copy.en | typeof copy.zh; onClose: () => void }) {
+  const [gifReady, setGifReady] = useState(false);
+
   useEffect(() => {
-    void preloadImage(gif.gifUrl);
+    setGifReady(false);
+    let cancelled = false;
+    preloadImage(gif.gifUrl).then(() => {
+      if (!cancelled) setGifReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [gif.gifUrl]);
 
   return (
@@ -460,7 +474,12 @@ function CustomBuilderGifOverlay({ gif, labels, onClose }: { gif: SelectedBuilde
       <button className="custom-builder-gif-backdrop" type="button" aria-label={labels.close} onClick={onClose} />
       <section className="custom-builder-gif-modal">
         <div className="workout-gif-frame">
-          <img src={gif.gifUrl} alt={gif.sourceName} onLoad={() => markImageCached(gif.gifUrl)} />
+          <img
+            className={gifReady ? "is-ready" : "is-preview"}
+            src={gifReady ? gif.gifUrl : gif.previewUrl}
+            alt={gif.sourceName}
+            onLoad={() => markImageCached(gifReady ? gif.gifUrl : gif.previewUrl)}
+          />
         </div>
         <div className="workout-gif-caption">
           <strong>{gif.title}</strong>

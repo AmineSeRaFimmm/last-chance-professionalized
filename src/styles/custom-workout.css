@@ -145,9 +145,16 @@
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 3px;
+  padding: 0 2px 4px;
+  mask-image: linear-gradient(90deg, transparent 0, #000000 14px, #000000 calc(100% - 22px), transparent 100%);
   overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x;
   -webkit-overflow-scrolling: touch;
+}
+
+.custom-workout-builder-modal.is-editing .custom-builder-day-pills::-webkit-scrollbar {
+  display: none;
 }
 
 .custom-builder-day-pills > span {
@@ -180,6 +187,11 @@
 }
 
 .custom-builder-day-pills > span.sortable {
+  touch-action: pan-x;
+  cursor: grab;
+}
+
+.custom-builder-day-pills > span.sortable b {
   touch-action: none;
   cursor: grab;
 }

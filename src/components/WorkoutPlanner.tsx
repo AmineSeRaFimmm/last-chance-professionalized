@@ -99,6 +99,17 @@ const zhText: Record<string, string> = {
   "User-defined weekly workout plan.": "用户自定义一周训练计划。",
   "User-defined session": "用户自定义训练日",
   "Add exercises in Custom Plan.": "在自定义计划中添加动作。",
+  "Legs / Lower": "腿部 / 下肢",
+  "Back / Deadlift": "背部 / 硬拉",
+  "Upper Body": "上肢",
+  "Push / Chest": "胸 / 推",
+  "Pull / Back": "背 / 拉",
+  "Full Body": "全身",
+  "Strength": "力量",
+  "Accessory + Cardio": "辅助 + 有氧",
+  "Light Cardio": "轻有氧",
+  "Walk / Recovery": "步行 / 恢复",
+  "Rest / Build Day": "休息 / 待添加",
   "keep 2–3 reps in reserve": "保留 2–3 次余力",
   "stop 1–2 reps before failure": "距离力竭保留 1–2 次",
   "use training max, no grinders during a cut": "使用 training max，减脂期不要硬磨极限次数",
@@ -189,7 +200,7 @@ export function WorkoutPlanner() {
   const workoutSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const result = useMemo(() => (savedInput ? buildResult(savedInput) : null), [savedInput]);
   const plan = useMemo(() => {
-    if (customPlan) return customWorkoutToWorkoutPlan(customPlan);
+    if (customPlan) return customWorkoutToWorkoutPlan(customPlan, loadTrainingFocusByDay());
     return savedInput && result
       ? buildWorkoutPlan({
           input: savedInput,
@@ -378,7 +389,7 @@ function WorkoutDayCard({ day, labels, language, onOpenGif, hideIntentIntensity 
   return (
     <section className="card workout-day-card">
       <div className="workout-day-head">
-        <div><div className="card-title no-margin">{day.day}</div><strong>{day.title}</strong></div>
+        <div><div className="card-title no-margin">{day.day}</div><strong>{tr(day.title, language)}</strong></div>
         <div className="workout-day-badges">
           {day.carbType && <span className={`day-type ${day.carbType.toLowerCase()}`}>{day.carbType}</span>}
           <span>{day.duration}</span>
