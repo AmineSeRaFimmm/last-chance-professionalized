@@ -93,6 +93,7 @@ const doubleTapDelayMs = 320;
 export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onSave }: CustomWorkoutBuilderOverlayProps) {
   const t = copy[language];
   const activeDayCardRef = useRef<HTMLButtonElement | null>(null);
+  const exerciseListRef = useRef<HTMLDivElement | null>(null);
   const activeDragRef = useRef<ActiveDrag | null>(null);
   const activeReorderRef = useRef<ActiveReorder | null>(null);
   const lastPillTapRef = useRef<LastPillTap | null>(null);
@@ -238,6 +239,15 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
     warmImageCache(exercises.map((exercise) => exercise.thumbUrl ?? exercise.gifUrl), 24);
   }, [exercises]);
 
+  useEffect(() => {
+    const list = exerciseListRef.current;
+    if (!list) return;
+
+    window.requestAnimationFrame(() => {
+      list.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+  }, [activeMuscle]);
+
   function addExerciseToDay(dayIndex: number, exercise: CustomCatalogExercise) {
     const exerciseKey = getCatalogExerciseKey(exercise);
     const nextExercise: CustomWorkoutExercise = {
@@ -380,7 +390,7 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
               ))}
             </div>
 
-            <div className="custom-builder-exercise-list">
+            <div className="custom-builder-exercise-list" ref={exerciseListRef}>
               {loadingMuscle === activeMuscle && <div className="custom-builder-empty">{t.loading}</div>}
               {loadingMuscle !== activeMuscle && exercises.length === 0 && <div className="custom-builder-empty">{t.empty}</div>}
               {loadingMuscle !== activeMuscle && exercises.slice(0, 80).map((exercise) => {

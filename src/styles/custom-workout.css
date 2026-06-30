@@ -108,6 +108,13 @@
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
 }
 
+.custom-workout-builder-modal.is-editing .custom-builder-day-card.active {
+  min-height: 0;
+  height: 100%;
+  align-content: start;
+  overflow: hidden;
+}
+
 .custom-builder-day-head {
   display: flex;
   justify-content: space-between;
@@ -133,7 +140,18 @@
   flex-wrap: wrap;
 }
 
+.custom-workout-builder-modal.is-editing .custom-builder-day-pills {
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 3px;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 .custom-builder-day-pills > span {
+  flex: 0 0 auto;
   max-width: 170px;
   overflow: hidden;
   text-overflow: ellipsis;
