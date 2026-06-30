@@ -41,6 +41,18 @@ interface ActiveReorder {
   moved: boolean;
 }
 
+interface PendingReorder {
+  dayIndex: number;
+  fromIndex: number;
+  label: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  x: number;
+  y: number;
+  activated: boolean;
+}
+
 interface SelectedBuilderGif {
   title: string;
   gifUrl: string;
@@ -91,6 +103,7 @@ const durationOptions = [10, 15, 20, 30, 45, 60];
 const firstMuscle = CUSTOM_WORKOUT_MUSCLE_TABS[0].muscle;
 const doubleTapDelayMs = 320;
 const pillPageSize = 8;
+const reorderLongPressMs = 220;
 
 export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onSave }: CustomWorkoutBuilderOverlayProps) {
   const t = copy[language];
@@ -98,6 +111,8 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
   const exerciseListRef = useRef<HTMLDivElement | null>(null);
   const activeDragRef = useRef<ActiveDrag | null>(null);
   const activeReorderRef = useRef<ActiveReorder | null>(null);
+  const pendingReorderRef = useRef<PendingReorder | null>(null);
+  const reorderLongPressTimerRef = useRef<number | null>(null);
   const lastPillTapRef = useRef<LastPillTap | null>(null);
   const [draft, setDraft] = useState<CustomWorkoutPlanData>(() => initialPlan ?? createEmptyCustomWorkoutPlan());
   const [activeDayIndex, setActiveDayIndex] = useState<number | null>(null);
@@ -124,6 +139,10 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
   useEffect(() => {
     activeReorderRef.current = activeReorder;
   }, [activeReorder]);
+
+  useEffect(() => {
+    return () => clearReorderLongPressTimer();
+  }, []);
 
   useEffect(() => {
     if (catalog[activeMuscle]) return;
@@ -205,17 +224,11 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
 
     function handlePointerUp(event: PointerEvent) {
       event.preventDefault();
-      const current = activeReorderRef.current;
-      if (current?.moved) {
-        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-custom-exercise-index]") as HTMLElement | null;
-        const toIndex = target ? Number(target.dataset.customExerciseIndex) : current.fromIndex;
-        if (Number.isInteger(toIndex)) reorderExerciseInDay(current.dayIndex, current.fromIndex, toIndex);
-      }
-
-      setActiveReorder(null);
+      finishReorderAt(event.clientX, event.clientY);
     }
 
     function handlePointerCancel() {
+      activeReorderRef.current = null;
       setActiveReorder(null);
     }
 
@@ -304,17 +317,27 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
     setActiveDrag({ exercise, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, moved: false });
   }
 
+  function clearReorderLongPressTimer() {
+    if (reorderLongPressTimerRef.current !== null) {
+      window.clearTimeout(reorderLongPressTimerRef.current);
+      reorderLongPressTimerRef.current = null;
+    }
+  }
+
   function startReorder(event: ReactPointerEvent<HTMLElement>, dayIndex: number, fromIndex: number, label: string) {
     if (activeDayIndex === null) return;
     const now = window.performance.now();
     const lastTap = lastPillTapRef.current;
     const isDoubleTap = Boolean(lastTap && lastTap.dayIndex === dayIndex && lastTap.exerciseIndex === fromIndex && now - lastTap.time <= doubleTapDelayMs);
 
-    event.preventDefault();
     event.stopPropagation();
 
     if (isDoubleTap) {
+      event.preventDefault();
       lastPillTapRef.current = null;
+      pendingReorderRef.current = null;
+      clearReorderLongPressTimer();
+      activeReorderRef.current = null;
       setActiveReorder(null);
       removeExerciseFromDay(dayIndex, fromIndex);
       return;
@@ -322,7 +345,94 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
 
     lastPillTapRef.current = { dayIndex, exerciseIndex: fromIndex, time: now };
     setActiveDrag(null);
-    setActiveReorder({ dayIndex, fromIndex, label, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, moved: false });
+    pendingReorderRef.current = {
+      dayIndex,
+      fromIndex,
+      label,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: event.clientX,
+      y: event.clientY,
+      activated: false
+    };
+    clearReorderLongPressTimer();
+    reorderLongPressTimerRef.current = window.setTimeout(() => {
+      const pending = pendingReorderRef.current;
+      if (pending?.pointerId === event.pointerId) activatePendingReorder(pending.x, pending.y);
+    }, reorderLongPressMs);
+  }
+
+  function handleReorderPointerMove(event: ReactPointerEvent<HTMLElement>) {
+    const pending = pendingReorderRef.current;
+    if (!pending || pending.pointerId !== event.pointerId) return;
+
+    pending.x = event.clientX;
+    pending.y = event.clientY;
+
+    if (!pending.activated) {
+      const deltaX = event.clientX - pending.startX;
+      const deltaY = event.clientY - pending.startY;
+      const distance = Math.hypot(deltaX, deltaY);
+      const horizontalScrollIntent = Math.abs(deltaX) > 12 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2;
+
+      if (horizontalScrollIntent) {
+        pendingReorderRef.current = null;
+        clearReorderLongPressTimer();
+        return;
+      }
+
+      if (event.pointerType === "mouse" && distance > 6) {
+        clearReorderLongPressTimer();
+        activatePendingReorder(event.clientX, event.clientY);
+      }
+    }
+
+    if (pendingReorderRef.current?.activated) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
+  function handleReorderPointerUp(event: ReactPointerEvent<HTMLElement>) {
+    const pending = pendingReorderRef.current;
+    if (pending?.pointerId === event.pointerId) {
+      pendingReorderRef.current = null;
+      clearReorderLongPressTimer();
+    }
+  }
+
+  function activatePendingReorder(x: number, y: number) {
+    const pending = pendingReorderRef.current;
+    if (!pending || pending.activated) return;
+
+    pending.activated = true;
+    const next: ActiveReorder = {
+      dayIndex: pending.dayIndex,
+      fromIndex: pending.fromIndex,
+      label: pending.label,
+      x,
+      y,
+      startX: pending.startX,
+      startY: pending.startY,
+      moved: true
+    };
+    activeReorderRef.current = next;
+    setActiveReorder(next);
+  }
+
+  function finishReorderAt(x: number, y: number) {
+    const current = activeReorderRef.current;
+    if (current?.moved) {
+      const target = document.elementFromPoint(x, y)?.closest("[data-custom-exercise-index]") as HTMLElement | null;
+      const toIndex = target ? Number(target.dataset.customExerciseIndex) : current.fromIndex;
+      if (Number.isInteger(toIndex)) reorderExerciseInDay(current.dayIndex, current.fromIndex, toIndex);
+    }
+
+    pendingReorderRef.current = null;
+    clearReorderLongPressTimer();
+    activeReorderRef.current = null;
+    setActiveReorder(null);
   }
 
   function openGif(exercise: CustomCatalogExercise) {
@@ -348,8 +458,12 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
         className={activeDayIndex !== null ? "removable sortable" : ""}
         data-custom-exercise-index={exerciseIndex}
         key={`${day}-${exercise.name}-${exerciseIndex}`}
+        onPointerCancel={activeDayIndex !== null ? handleReorderPointerUp : undefined}
+        onPointerDown={activeDayIndex !== null ? (event) => startReorder(event, dayIndex, exerciseIndex, exercise.name) : undefined}
+        onPointerMove={activeDayIndex !== null ? handleReorderPointerMove : undefined}
+        onPointerUp={activeDayIndex !== null ? handleReorderPointerUp : undefined}
       >
-        {activeDayIndex !== null && <b onPointerDown={(event) => startReorder(event, dayIndex, exerciseIndex, exercise.name)}>{exerciseIndex + 1}</b>}
+        {activeDayIndex !== null && <b>{exerciseIndex + 1}</b>}
         {exercise.name}
       </span>
     );

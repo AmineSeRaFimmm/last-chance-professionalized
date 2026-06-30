@@ -212,7 +212,7 @@
 
 .custom-builder-day-pills > span.sortable b,
 .custom-builder-pill-page > span.sortable b {
-  touch-action: none;
+  touch-action: pan-x;
   cursor: grab;
 }
 
