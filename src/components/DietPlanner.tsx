@@ -9,11 +9,13 @@ import { MealComposerOverlay } from "./MealComposerOverlay";
 
 type Language = "en" | "zh";
 type CarouselSlot = "prev" | "current" | "next";
+type DietTemplate = "meals" | "prep";
 
 interface ComposerState {
   dayLabel: string;
   meal: DietMeal;
   baseMeal: DietMeal;
+  mode: DietTemplate;
 }
 
 interface CarouselDayCard {
@@ -60,6 +62,11 @@ const copy = {
     shoppingSummary: "7 days",
     shoppingItems: "items",
     shoppingTotal: "total",
+    templateMeals: "Meals",
+    templatePrep: "Prep",
+    mealPrepTitle: "Meal prep",
+    mealPrepSubtitle: "One prep split across the day.",
+    mealPrepServings: "4 servings",
     shoppingGroups: {
       protein: "Protein",
       carb: "Carbs",
@@ -93,6 +100,11 @@ const copy = {
     shoppingSummary: "7 天",
     shoppingItems: "项",
     shoppingTotal: "合计",
+    templateMeals: "分餐",
+    templatePrep: "备餐",
+    mealPrepTitle: "统一备餐",
+    mealPrepSubtitle: "一份备餐，分多次吃。",
+    mealPrepServings: "4 份",
     shoppingGroups: {
       protein: "蛋白质",
       carb: "碳水",
@@ -114,6 +126,7 @@ export function DietPlanner() {
   const [overrides, setOverrides] = useState<DietMealOverride[]>(loadDietOverrides);
   const [composer, setComposer] = useState<ComposerState | null>(null);
   const [activeDayIndex, setActiveDayIndex] = useState(getTodayWeekIndex);
+  const [dietTemplate, setDietTemplate] = useState<DietTemplate>("meals");
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const weekStackRef = useRef<HTMLDivElement | null>(null);
   const activeDayCardRef = useRef<HTMLDivElement | null>(null);
@@ -142,7 +155,7 @@ export function DietPlanner() {
         <section className="hero diet-hero">
           <div className="hero-topline">
             <p className="eyebrow">{t.title}</p>
-            <DietHeroToplineSpacer />
+            <DietTemplateToggle labels={t} template={dietTemplate} onChange={setDietTemplate} />
           </div>
           <h1 className="hero-title">Diet</h1>
           <p className="hero-subtitle">{t.subtitle}</p>
@@ -182,17 +195,20 @@ export function DietPlanner() {
     moveActiveDay(deltaX < 0 ? 1 : -1);
   }
 
-  function openComposer(day: DietDay, baseMeal: DietMeal, meal: DietMeal) {
+  function openComposer(day: DietDay, baseMeal: DietMeal, meal: DietMeal, mode: DietTemplate = "meals") {
     setComposer({
       dayLabel: day.day,
       meal,
-      baseMeal
+      baseMeal,
+      mode
     });
   }
 
   function handleApply(foodNames: string[]) {
     if (!composer) return;
-    const next = saveMealOverride({ day: composer.dayLabel, mealName: composer.baseMeal.name, foodNames });
+    const next = composer.mode === "prep"
+      ? saveMealPrepOverrides(composer.dayLabel, baseWeek.find((day) => day.day === composer.dayLabel)?.meals ?? [], foodNames)
+      : saveMealOverride({ day: composer.dayLabel, mealName: composer.baseMeal.name, foodNames });
     setOverrides(next);
     setComposer(null);
   }
@@ -202,7 +218,7 @@ export function DietPlanner() {
       <section className="hero diet-hero">
         <div className="hero-topline">
           <p className="eyebrow">{t.title}</p>
-          <DietHeroToplineSpacer />
+          <DietTemplateToggle labels={t} template={dietTemplate} onChange={setDietTemplate} />
         </div>
         <h1 className="hero-title">Diet</h1>
         <p className="hero-subtitle">{t.subtitle}</p>
@@ -228,7 +244,8 @@ export function DietPlanner() {
               baseDay={baseDay}
               day={day}
               labels={t}
-              onMealOpen={(baseMeal, meal) => openComposer(day, baseMeal, meal)}
+              template={dietTemplate}
+              onMealOpen={(baseMeal, meal, mode) => openComposer(day, baseMeal, meal, mode)}
             />
           </div>
         ))}
@@ -295,11 +312,11 @@ function DietShoppingListCard({ groups, labels }: { groups: ShoppingGroup[]; lab
   );
 }
 
-function DietHeroToplineSpacer() {
+function DietTemplateToggle({ labels, template, onChange }: { labels: typeof copy.en | typeof copy.zh; template: DietTemplate; onChange: (template: DietTemplate) => void }) {
   return (
-    <div className="language-toggle" aria-hidden="true" style={{ visibility: "hidden", pointerEvents: "none" }}>
-      <button type="button" tabIndex={-1}>EN</button>
-      <button type="button" tabIndex={-1}>中文</button>
+    <div className="diet-template-toggle" aria-label={labels.templatePrep}>
+      <button className={template === "meals" ? "active" : ""} type="button" onClick={() => onChange("meals")}>{labels.templateMeals}</button>
+      <button className={template === "prep" ? "active" : ""} type="button" onClick={() => onChange("prep")}>{labels.templatePrep}</button>
     </div>
   );
 }
@@ -325,14 +342,19 @@ function DietInfoCard({ labels }: { labels: typeof copy.en | typeof copy.zh }) {
 function DietDayCard({
   day,
   baseDay,
+  template,
   labels,
   onMealOpen
 }: {
   day: DietDay;
   baseDay: DietDay;
+  template: DietTemplate;
   labels: typeof copy.en | typeof copy.zh;
-  onMealOpen: (baseMeal: DietMeal, meal: DietMeal) => void;
+  onMealOpen: (baseMeal: DietMeal, meal: DietMeal, mode?: DietTemplate) => void;
 }) {
+  const mealPrep = buildMealPrepMeal(day, labels.mealPrepTitle);
+  const baseMealPrep = buildMealPrepMeal(baseDay, labels.mealPrepTitle);
+
   return (
     <section className="card diet-day-card">
       <div className="diet-day-head">
@@ -346,17 +368,25 @@ function DietDayCard({
         </div>
       </div>
 
-      <div className="diet-meal-stack">
-        {day.meals.map((meal, mealIndex) => (
-          <DietMealTile
-            baseMeal={baseDay.meals[mealIndex]}
-            labels={labels}
-            meal={meal}
-            key={meal.name}
-            onOpen={() => onMealOpen(baseDay.meals[mealIndex], meal)}
-          />
-        ))}
-      </div>
+      {template === "prep" ? (
+        <DietMealPrepTile
+          labels={labels}
+          meal={mealPrep}
+          onOpen={() => onMealOpen(baseMealPrep, mealPrep, "prep")}
+        />
+      ) : (
+        <div className="diet-meal-stack">
+          {day.meals.map((meal, mealIndex) => (
+            <DietMealTile
+              baseMeal={baseDay.meals[mealIndex]}
+              labels={labels}
+              meal={meal}
+              key={meal.name}
+              onOpen={() => onMealOpen(baseDay.meals[mealIndex], meal)}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="diet-total-line">
         <span>{labels.estimate}</span>
@@ -366,6 +396,21 @@ function DietDayCard({
         <span>{labels.fat} {day.totals.fatG}g</span>
       </div>
     </section>
+  );
+}
+
+function DietMealPrepTile({ meal, labels, onOpen }: { meal: DietMeal; labels: typeof copy.en | typeof copy.zh; onOpen: () => void }) {
+  return (
+    <div className="diet-meal-prep-card">
+      <div className="diet-meal-prep-head">
+        <div>
+          <strong>{labels.mealPrepTitle}</strong>
+          <span>{labels.mealPrepSubtitle}</span>
+        </div>
+        <button type="button" onClick={onOpen}>{labels.mealPrepServings}</button>
+      </div>
+      <DietMealTile baseMeal={meal} labels={labels} meal={meal} onOpen={onOpen} />
+    </div>
   );
 }
 
@@ -474,6 +519,45 @@ function formatShoppingAmount(grams: number): string {
     return `${Number.isInteger(kilograms) ? kilograms.toFixed(0) : kilograms.toFixed(1)}kg`;
   }
   return `${Math.round(grams)}g`;
+}
+
+function saveMealPrepOverrides(dayLabel: string, baseMeals: DietMeal[], foodNames: string[]): DietMealOverride[] {
+  return baseMeals.reduce(
+    (_current, meal) => saveMealOverride({ day: dayLabel, mealName: meal.name, foodNames }),
+    loadDietOverrides()
+  );
+}
+
+function buildMealPrepMeal(day: DietDay, name: string): DietMeal {
+  const itemGrams = new Map<string, number>();
+
+  for (const meal of day.meals) {
+    for (const item of meal.items) {
+      itemGrams.set(item.name, (itemGrams.get(item.name) ?? 0) + item.grams);
+    }
+  }
+
+  return {
+    name,
+    items: [...itemGrams.entries()]
+      .map(([itemName, grams]) => ({ name: itemName, grams }))
+      .sort((a, b) => {
+        const roleOrder = roleSortValue(getFoodRoleClass(a.name)) - roleSortValue(getFoodRoleClass(b.name));
+        return roleOrder || b.grams - a.grams || a.name.localeCompare(b.name);
+      }),
+    calories: day.totals.calories,
+    proteinG: day.totals.proteinG,
+    carbsG: day.totals.carbsG,
+    fatG: day.totals.fatG
+  };
+}
+
+function roleSortValue(role: string): number {
+  if (role === "protein") return 0;
+  if (role === "carb") return 1;
+  if (role === "plant") return 2;
+  if (role === "fat") return 3;
+  return 4;
 }
 
 function applyOverridesToWeek(baseWeek: DietDay[], overrides: DietMealOverride[]): DietDay[] {

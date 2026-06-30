@@ -10,6 +10,35 @@
   margin-top: 4px;
 }
 
+.diet-template-toggle {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  min-width: 112px;
+  border-radius: 999px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(17, 17, 17, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 8px 18px rgba(0, 0, 0, 0.05);
+}
+
+.diet-template-toggle button {
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.diet-template-toggle button.active {
+  background: #111111;
+  color: #ffffff;
+}
+
 .diet-week-stack {
   display: flex;
   gap: 10px;
@@ -256,6 +285,49 @@
 .diet-meal-stack {
   display: grid;
   gap: 8px;
+}
+
+.diet-meal-prep-card {
+  display: grid;
+  gap: 10px;
+}
+
+.diet-meal-prep-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 18px;
+  background: #111111;
+  color: #ffffff;
+}
+
+.diet-meal-prep-head strong {
+  display: block;
+  font-size: 15px;
+  letter-spacing: -0.03em;
+}
+
+.diet-meal-prep-head span {
+  display: block;
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.diet-meal-prep-head button {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 9px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 .diet-meal {
