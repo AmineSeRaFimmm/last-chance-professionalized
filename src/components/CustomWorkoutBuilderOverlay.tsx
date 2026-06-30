@@ -492,6 +492,7 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
     if (!pending || pending.activated) return;
 
     pending.activated = true;
+    window.getSelection()?.removeAllRanges();
     const next: ActiveReorder = {
       dayIndex: pending.dayIndex,
       fromIndex: pending.fromIndex,

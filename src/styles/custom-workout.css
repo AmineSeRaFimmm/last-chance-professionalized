@@ -179,6 +179,9 @@
   background: rgba(255, 255, 255, 0.16);
   font-size: 11px;
   font-weight: 850;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .custom-builder-pill-page > span {
@@ -197,6 +200,9 @@
   background: rgba(255, 255, 255, 0.2);
   font-size: 10px;
   line-height: 1;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .custom-builder-day-pills > span.removable,
