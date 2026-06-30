@@ -45,6 +45,7 @@ interface PendingReorder {
   dayIndex: number;
   fromIndex: number;
   label: string;
+  element: HTMLElement;
   pointerId: number;
   startX: number;
   startY: number;
@@ -104,6 +105,7 @@ const firstMuscle = CUSTOM_WORKOUT_MUSCLE_TABS[0].muscle;
 const doubleTapDelayMs = 320;
 const pillPageSize = 8;
 const reorderLongPressMs = 220;
+const reorderScrollCancelPx = 28;
 
 export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onSave }: CustomWorkoutBuilderOverlayProps) {
   const t = copy[language];
@@ -113,6 +115,7 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
   const activeReorderRef = useRef<ActiveReorder | null>(null);
   const pendingReorderRef = useRef<PendingReorder | null>(null);
   const reorderLongPressTimerRef = useRef<number | null>(null);
+  const reorderWindowCleanupRef = useRef<(() => void) | null>(null);
   const lastPillTapRef = useRef<LastPillTap | null>(null);
   const [draft, setDraft] = useState<CustomWorkoutPlanData>(() => initialPlan ?? createEmptyCustomWorkoutPlan());
   const [activeDayIndex, setActiveDayIndex] = useState<number | null>(null);
@@ -141,7 +144,10 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
   }, [activeReorder]);
 
   useEffect(() => {
-    return () => clearReorderLongPressTimer();
+    return () => {
+      clearReorderLongPressTimer();
+      clearReorderWindowListeners();
+    };
   }, []);
 
   useEffect(() => {
@@ -228,6 +234,7 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
     }
 
     function handlePointerCancel() {
+      cancelPendingReorder();
       activeReorderRef.current = null;
       setActiveReorder(null);
     }
@@ -324,6 +331,11 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
     }
   }
 
+  function clearReorderWindowListeners() {
+    reorderWindowCleanupRef.current?.();
+    reorderWindowCleanupRef.current = null;
+  }
+
   function startReorder(event: ReactPointerEvent<HTMLElement>, dayIndex: number, fromIndex: number, label: string) {
     if (activeDayIndex === null) return;
     const now = window.performance.now();
@@ -335,8 +347,7 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
     if (isDoubleTap) {
       event.preventDefault();
       lastPillTapRef.current = null;
-      pendingReorderRef.current = null;
-      clearReorderLongPressTimer();
+      cancelPendingReorder();
       activeReorderRef.current = null;
       setActiveReorder(null);
       removeExerciseFromDay(dayIndex, fromIndex);
@@ -345,10 +356,16 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
 
     lastPillTapRef.current = { dayIndex, exerciseIndex: fromIndex, time: now };
     setActiveDrag(null);
+    try {
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    } catch {
+      // Window-level listeners below keep reorder stable when pointer capture is unavailable.
+    }
     pendingReorderRef.current = {
       dayIndex,
       fromIndex,
       label,
+      element: event.currentTarget,
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
@@ -356,6 +373,7 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
       y: event.clientY,
       activated: false
     };
+    bindPendingReorderWindowEvents(event.pointerId);
     clearReorderLongPressTimer();
     reorderLongPressTimerRef.current = window.setTimeout(() => {
       const pending = pendingReorderRef.current;
@@ -364,31 +382,9 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
   }
 
   function handleReorderPointerMove(event: ReactPointerEvent<HTMLElement>) {
-    const pending = pendingReorderRef.current;
-    if (!pending || pending.pointerId !== event.pointerId) return;
+    const activated = processPendingReorderMove(event.pointerId, event.pointerType, event.clientX, event.clientY);
 
-    pending.x = event.clientX;
-    pending.y = event.clientY;
-
-    if (!pending.activated) {
-      const deltaX = event.clientX - pending.startX;
-      const deltaY = event.clientY - pending.startY;
-      const distance = Math.hypot(deltaX, deltaY);
-      const horizontalScrollIntent = Math.abs(deltaX) > 12 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2;
-
-      if (horizontalScrollIntent) {
-        pendingReorderRef.current = null;
-        clearReorderLongPressTimer();
-        return;
-      }
-
-      if (event.pointerType === "mouse" && distance > 6) {
-        clearReorderLongPressTimer();
-        activatePendingReorder(event.clientX, event.clientY);
-      }
-    }
-
-    if (pendingReorderRef.current?.activated) {
+    if (activated) {
       event.preventDefault();
       event.stopPropagation();
     }
@@ -397,9 +393,98 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
   function handleReorderPointerUp(event: ReactPointerEvent<HTMLElement>) {
     const pending = pendingReorderRef.current;
     if (pending?.pointerId === event.pointerId) {
-      pendingReorderRef.current = null;
-      clearReorderLongPressTimer();
+      if (pending.activated || activeReorderRef.current) {
+        event.preventDefault();
+        event.stopPropagation();
+        finishReorderAt(event.clientX, event.clientY);
+        return;
+      }
+
+      cancelPendingReorder();
     }
+  }
+
+  function bindPendingReorderWindowEvents(pointerId: number) {
+    clearReorderWindowListeners();
+
+    function handleWindowPointerMove(event: PointerEvent) {
+      if (event.pointerId !== pointerId) return;
+      if (processPendingReorderMove(event.pointerId, event.pointerType, event.clientX, event.clientY)) {
+        event.preventDefault();
+      }
+    }
+
+    function handleWindowPointerUp(event: PointerEvent) {
+      if (event.pointerId !== pointerId) return;
+      if (pendingReorderRef.current?.activated || activeReorderRef.current) {
+        event.preventDefault();
+        finishReorderAt(event.clientX, event.clientY);
+        return;
+      }
+      cancelPendingReorder();
+    }
+
+    function handleWindowPointerCancel(event: PointerEvent) {
+      if (event.pointerId !== pointerId) return;
+      cancelPendingReorder();
+      activeReorderRef.current = null;
+      setActiveReorder(null);
+    }
+
+    window.addEventListener("pointermove", handleWindowPointerMove, { passive: false });
+    window.addEventListener("pointerup", handleWindowPointerUp, { passive: false });
+    window.addEventListener("pointercancel", handleWindowPointerCancel);
+    reorderWindowCleanupRef.current = () => {
+      window.removeEventListener("pointermove", handleWindowPointerMove);
+      window.removeEventListener("pointerup", handleWindowPointerUp);
+      window.removeEventListener("pointercancel", handleWindowPointerCancel);
+    };
+  }
+
+  function processPendingReorderMove(pointerId: number, pointerType: string, clientX: number, clientY: number): boolean {
+    const pending = pendingReorderRef.current;
+    if (!pending || pending.pointerId !== pointerId) return Boolean(activeReorderRef.current);
+
+    pending.x = clientX;
+    pending.y = clientY;
+
+    if (!pending.activated) {
+      const deltaX = clientX - pending.startX;
+      const deltaY = clientY - pending.startY;
+      const distance = Math.hypot(deltaX, deltaY);
+      const horizontalScrollIntent = Math.abs(deltaX) > reorderScrollCancelPx && Math.abs(deltaX) > Math.abs(deltaY) * 1.25;
+
+      if (horizontalScrollIntent) {
+        cancelPendingReorder();
+        return false;
+      }
+
+      if (pointerType === "mouse" && distance > 6) {
+        clearReorderLongPressTimer();
+        activatePendingReorder(clientX, clientY);
+      }
+    }
+
+    if (pendingReorderRef.current?.activated) {
+      updateActiveReorderPosition(clientX, clientY);
+      return true;
+    }
+
+    return false;
+  }
+
+  function cancelPendingReorder() {
+    const pending = pendingReorderRef.current;
+    try {
+      if (pending?.element.hasPointerCapture?.(pending.pointerId)) {
+        pending.element.releasePointerCapture(pending.pointerId);
+      }
+    } catch {
+      // Pointer capture can already be released by the browser.
+    }
+    pendingReorderRef.current = null;
+    clearReorderLongPressTimer();
+    clearReorderWindowListeners();
   }
 
   function activatePendingReorder(x: number, y: number) {
@@ -421,6 +506,11 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
     setActiveReorder(next);
   }
 
+  function updateActiveReorderPosition(x: number, y: number) {
+    activeReorderRef.current = activeReorderRef.current ? { ...activeReorderRef.current, x, y, moved: true } : null;
+    setActiveReorder((current) => current ? { ...current, x, y, moved: true } : current);
+  }
+
   function finishReorderAt(x: number, y: number) {
     const current = activeReorderRef.current;
     if (current?.moved) {
@@ -429,8 +519,7 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
       if (Number.isInteger(toIndex)) reorderExerciseInDay(current.dayIndex, current.fromIndex, toIndex);
     }
 
-    pendingReorderRef.current = null;
-    clearReorderLongPressTimer();
+    cancelPendingReorder();
     activeReorderRef.current = null;
     setActiveReorder(null);
   }
