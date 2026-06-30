@@ -90,6 +90,7 @@ const repOptions = ["5", "6–8", "8–10", "10–12", "12–15", "15–20", "AM
 const durationOptions = [10, 15, 20, 30, 45, 60];
 const firstMuscle = CUSTOM_WORKOUT_MUSCLE_TABS[0].muscle;
 const doubleTapDelayMs = 320;
+const pillPageSize = 8;
 
 export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onSave }: CustomWorkoutBuilderOverlayProps) {
   const t = copy[language];
@@ -341,6 +342,19 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
     onBack();
   }
 
+  function renderExercisePill(day: string, dayIndex: number, exercise: CustomWorkoutExercise, exerciseIndex: number) {
+    return (
+      <span
+        className={activeDayIndex !== null ? "removable sortable" : ""}
+        data-custom-exercise-index={exerciseIndex}
+        key={`${day}-${exercise.name}-${exerciseIndex}`}
+      >
+        {activeDayIndex !== null && <b onPointerDown={(event) => startReorder(event, dayIndex, exerciseIndex, exercise.name)}>{exerciseIndex + 1}</b>}
+        {exercise.name}
+      </span>
+    );
+  }
+
   return (
     <div className="custom-workout-builder-overlay" role="dialog" aria-modal="true" aria-label={t.title}>
       <section className={`custom-workout-builder-modal ${activeDayIndex !== null ? "is-editing" : ""}`}>
@@ -369,16 +383,13 @@ export function CustomWorkoutBuilderOverlay({ initialPlan, language, onBack, onS
                   <span>{day.exercises.length} exercises</span>
                 </div>
                 <div className="custom-builder-day-pills">
-                  {day.exercises.map((exercise, exerciseIndex) => (
-                    <span
-                      className={activeDayIndex !== null ? "removable sortable" : ""}
-                      data-custom-exercise-index={exerciseIndex}
-                      key={`${day.day}-${exercise.name}-${exerciseIndex}`}
-                    >
-                      {activeDayIndex !== null && <b onPointerDown={(event) => startReorder(event, dayIndex, exerciseIndex, exercise.name)}>{exerciseIndex + 1}</b>}
-                      {exercise.name}
-                    </span>
-                  ))}
+                  {activeDayIndex !== null
+                    ? chunkItems(day.exercises, pillPageSize).map((page, pageIndex) => (
+                        <div className="custom-builder-pill-page" key={`${day.day}-page-${pageIndex}`}>
+                          {page.map((exercise, pageExerciseIndex) => renderExercisePill(day.day, dayIndex, exercise, pageIndex * pillPageSize + pageExerciseIndex))}
+                        </div>
+                      ))
+                    : day.exercises.map((exercise, exerciseIndex) => renderExercisePill(day.day, dayIndex, exercise, exerciseIndex))}
                 </div>
               </button>
             );
@@ -505,4 +516,12 @@ function isInsideElement(x: number, y: number, element: HTMLElement | null): boo
   if (!element) return false;
   const rect = element.getBoundingClientRect();
   return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+}
+
+function chunkItems<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
 }

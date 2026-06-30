@@ -145,6 +145,7 @@
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
+  gap: 10px;
   padding: 0 2px 4px;
   mask-image: linear-gradient(90deg, transparent 0, #000000 14px, #000000 calc(100% - 22px), transparent 100%);
   overscroll-behavior-x: contain;
@@ -157,7 +158,17 @@
   display: none;
 }
 
-.custom-builder-day-pills > span {
+.custom-builder-pill-page {
+  flex: 0 0 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 29px;
+  gap: 6px;
+  align-content: start;
+}
+
+.custom-builder-day-pills > span,
+.custom-builder-pill-page > span {
   flex: 0 0 auto;
   max-width: 170px;
   overflow: hidden;
@@ -170,7 +181,13 @@
   font-weight: 850;
 }
 
-.custom-builder-day-pills > span b {
+.custom-builder-pill-page > span {
+  max-width: none;
+  min-width: 0;
+}
+
+.custom-builder-day-pills > span b,
+.custom-builder-pill-page > span b {
   display: inline-grid;
   place-items: center;
   min-width: 17px;
@@ -182,16 +199,19 @@
   line-height: 1;
 }
 
-.custom-builder-day-pills > span.removable {
+.custom-builder-day-pills > span.removable,
+.custom-builder-pill-page > span.removable {
   cursor: pointer;
 }
 
-.custom-builder-day-pills > span.sortable {
+.custom-builder-day-pills > span.sortable,
+.custom-builder-pill-page > span.sortable {
   touch-action: pan-x;
   cursor: grab;
 }
 
-.custom-builder-day-pills > span.sortable b {
+.custom-builder-day-pills > span.sortable b,
+.custom-builder-pill-page > span.sortable b {
   touch-action: none;
   cursor: grab;
 }
