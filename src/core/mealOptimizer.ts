@@ -88,16 +88,13 @@ export function optimizeMealFromFoodNames(mealName: string, target: MealTarget, 
   const meal = makeOptimizedMeal(mealName, optimized);
   const hasProtein = optimized.some((entry) => entry.food.protein * (entry.grams / 100) >= 8);
   const hasPrimaryCarb = optimized.some((entry) => getOptimizerFoodRole(entry.food) === "primaryCarb");
-  const supportCarbsAtLimit = optimized
-    .filter((entry) => getOptimizerFoodRole(entry.food) === "supportCarb")
-    .some((entry) => entry.grams >= entry.max - 5);
   const calorieDelta = meal.calories - target.calories;
   const proteinDelta = meal.proteinG - target.proteinG;
   const carbsDelta = meal.carbsG - target.carbsG;
   const fatDelta = meal.fatG - target.fatG;
   const status = !hasProtein
     ? "needs-protein"
-    : !hasPrimaryCarb && supportCarbsAtLimit && (carbsDelta <= -8 || meal.carbsG < target.carbsG * 0.8)
+    : !hasPrimaryCarb && (meal.carbsG <= 1 || (target.carbsG >= 5 && (carbsDelta <= -3 || meal.carbsG < target.carbsG * 0.9)))
       ? "needs-carb"
     : Math.abs(calorieDelta) <= 20 && Math.abs(proteinDelta) <= 5 && Math.abs(carbsDelta) <= 6 && Math.abs(fatDelta) <= 3
       ? "balanced"

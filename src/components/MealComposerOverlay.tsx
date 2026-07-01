@@ -159,7 +159,7 @@ export function MealComposerOverlay({
   const selectedFoods = selectedFoodNames
     .map((name) => getMealFoodOptions().find((food) => food.name === name))
     .filter((food): food is FoodWithCategory => Boolean(food));
-  const applyDisabled = preview.status === "empty" || preview.status === "needs-protein";
+  const applyDisabled = preview.status === "empty" || preview.status === "needs-protein" || preview.status === "needs-carb";
 
   useEffect(() => {
     activeDragRef.current = activeDrag;
