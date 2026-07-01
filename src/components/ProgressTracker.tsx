@@ -5,7 +5,6 @@ import {
   type WeightLogEntry
 } from "../core/progress";
 import {
-  clearWeightLog,
   deleteWeightLogEntry,
   loadWeightLog,
   upsertWeightLogEntry
@@ -27,9 +26,7 @@ const copy = {
       "Log body weight consistently. After at least 7 days, Last Chance estimates trend loss and actual TDEE from your data.",
     date: "Date",
     weight: "Weight kg",
-    calories: "Calories optional",
     add: "Add / update entry",
-    clear: "Clear log",
     delete: "Delete",
     latestAverage: "Latest average",
     trend: "Trend loss",
@@ -41,19 +38,15 @@ const copy = {
     fast: "Loss is faster than target. If strength, sleep, or mood drop, add calories back to training days.",
     gain: "Weight is trending up. Check weekend calories, oils, sauces, snacks, alcohol, and high-carb day execution.",
     recentEntries: "Recent entries",
-    exportLog: "Export log CSV",
     targetCalories: "Target calories",
-    expectedLoss: "Expected loss",
-    currentWeight: "Current weight"
+    expectedLoss: "Expected loss"
   },
   zh: {
     title: "进度跟踪",
     note: "持续记录体重。满 7 天后，Last Chance 会根据你的数据估算趋势减重和真实 TDEE。",
     date: "日期",
     weight: "体重 kg",
-    calories: "热量，可选",
     add: "添加 / 更新记录",
-    clear: "清空记录",
     delete: "删除",
     latestAverage: "最新平均",
     trend: "趋势减重",
@@ -65,10 +58,8 @@ const copy = {
     fast: "下降快于目标。如果力量、睡眠或情绪下降，应把热量加回训练日。",
     gain: "体重趋势上升。检查周末热量、油、酱料、零食、酒精和高碳日执行。",
     recentEntries: "最近记录",
-    exportLog: "导出记录 CSV",
     targetCalories: "目标热量",
-    expectedLoss: "预计下降",
-    currentWeight: "当前体重"
+    expectedLoss: "预计下降"
   }
 } as const;
 
@@ -82,7 +73,6 @@ export function ProgressTracker({
   const [entries, setEntries] = useState<WeightLogEntry[]>(() => loadWeightLog());
   const [date, setDate] = useState(todayIso());
   const [weightKg, setWeightKg] = useState(Number(defaultWeightKg.toFixed(1)));
-  const [calories, setCalories] = useState<number | undefined>(plannedDailyCalories);
 
   const summary = useMemo(
     () => calculateProgressSummary(entries, plannedDailyCalories, expectedWeeklyLossKg),
@@ -96,11 +86,7 @@ export function ProgressTracker({
 
     const nextEntries = upsertWeightLogEntry(entries, {
       date,
-      weightKg,
-      calories:
-        calories !== undefined && Number.isFinite(calories) && calories > 0
-          ? calories
-          : undefined
+      weightKg
     });
 
     setEntries(nextEntries);
@@ -108,14 +94,6 @@ export function ProgressTracker({
 
   function handleDelete(dateToDelete: string) {
     setEntries(deleteWeightLogEntry(entries, dateToDelete));
-  }
-
-  function handleClear() {
-    setEntries(clearWeightLog());
-  }
-
-  function handleExport() {
-    downloadTextFile("last-chance-weight-log.csv", buildWeightLogCsv(entries), "text/csv");
   }
 
   return (
@@ -130,14 +108,10 @@ export function ProgressTracker({
       <div className="progress-plan-strip">
         <ProgressPlanMetric label={t.targetCalories} value={`${plannedDailyCalories} kcal`} />
         <ProgressPlanMetric label={t.expectedLoss} value={`${expectedWeeklyLossKg} kg/wk`} />
-        <ProgressPlanMetric label={t.currentWeight} value={`${defaultWeightKg.toFixed(1)} kg`} />
       </div>
 
-      <div className="input-grid compact-grid">
-        <div className="field">
-          <label>{t.date}</label>
-          <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
-        </div>
+      <div className="progress-entry-grid">
+        <ProgressDatePicker label={t.date} language={language} value={date} onChange={setDate} />
         <div className="field">
           <label>{t.weight}</label>
           <input
@@ -147,20 +121,6 @@ export function ProgressTracker({
             step={0.1}
             value={weightKg}
             onChange={(event) => setWeightKg(Number(event.target.value))}
-          />
-        </div>
-        <div className="field">
-          <label>{t.calories}</label>
-          <input
-            type="number"
-            min={800}
-            max={6000}
-            step={10}
-            value={calories ?? ""}
-            placeholder={String(plannedDailyCalories)}
-            onChange={(event) =>
-              setCalories(event.target.value === "" ? undefined : Number(event.target.value))
-            }
           />
         </div>
       </div>
@@ -195,15 +155,6 @@ export function ProgressTracker({
         {getStatusMessage(summary.status, t)}
       </div>
 
-      <div className="progress-secondary-actions">
-        <button className="secondary-button" type="button" onClick={handleExport}>
-          {t.exportLog}
-        </button>
-        <button className="secondary-button danger-button" type="button" onClick={handleClear}>
-          {t.clear}
-        </button>
-      </div>
-
       {recentEntries.length > 0 && (
         <div className="recent-log">
           <div className="recent-log-title">{t.recentEntries}</div>
@@ -211,7 +162,6 @@ export function ProgressTracker({
             <div className="log-row" key={entry.date}>
               <span>{entry.date}</span>
               <strong>{entry.weightKg.toFixed(1)} kg</strong>
-              <em>{entry.calories ? `${entry.calories} kcal` : "—"}</em>
               <button type="button" onClick={() => handleDelete(entry.date)}>
                 {t.delete}
               </button>
@@ -220,6 +170,31 @@ export function ProgressTracker({
         </div>
       )}
     </section>
+  );
+}
+
+function ProgressDatePicker({
+  label,
+  language,
+  value,
+  onChange
+}: {
+  label: string;
+  language: Language;
+  value: string;
+  onChange: (date: string) => void;
+}) {
+  const formatted = formatDateDisplay(value, language);
+
+  return (
+    <label className="progress-date-field">
+      <span>{label}</span>
+      <span className="progress-date-picker">
+        <strong>{formatted.primary}</strong>
+        <em>{formatted.secondary}</em>
+        <input type="date" value={value} onChange={(event) => onChange(event.target.value)} />
+      </span>
+    </label>
   );
 }
 
@@ -253,24 +228,15 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function buildWeightLogCsv(entries: WeightLogEntry[]): string {
-  const lines = ["date,weightKg,calories"];
+function formatDateDisplay(value: string, language: Language): { primary: string; secondary: string } {
+  const [year, month, day] = value.split("-").map(Number);
+  const date = Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)
+    ? new Date(year, month - 1, day)
+    : new Date();
+  const locale = language === "zh" ? "zh-CN" : "en-US";
 
-  entries.forEach((entry) => {
-    lines.push(`${entry.date},${entry.weightKg},${entry.calories ?? ""}`);
-  });
-
-  return lines.join("\n");
-}
-
-function downloadTextFile(filename: string, content: string, mimeType: string) {
-  const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
+  return {
+    primary: date.toLocaleDateString(locale, { weekday: "short", month: "short", day: "numeric" }),
+    secondary: String(date.getFullYear())
+  };
 }
