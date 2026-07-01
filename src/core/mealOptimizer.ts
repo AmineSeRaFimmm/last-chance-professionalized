@@ -13,7 +13,7 @@ export interface MealTarget {
 
 export interface OptimizedMealResult {
   meal: DietMeal;
-  status: "balanced" | "adjusted" | "needs-protein" | "needs-carb" | "empty";
+  status: "balanced" | "adjusted" | "needs-protein" | "needs-carb" | "needs-fat" | "off-target" | "empty";
   calorieDelta: number;
   proteinDelta: number;
   carbsDelta: number;
@@ -28,6 +28,7 @@ interface OptimizerEntry {
 }
 
 type OptimizerFoodRole = "primaryProtein" | "primaryCarb" | "supportCarb" | "fat" | "plant";
+type OptimizerMode = "meal" | "prep";
 
 const supportCarbMaxGrams: Record<string, number> = {
   Banana: 150,
@@ -63,6 +64,14 @@ export function replaceFoodByRole(currentFoodNames: string[], nextFoodName: stri
 }
 
 export function optimizeMealFromFoodNames(mealName: string, target: MealTarget, foodNames: string[]): OptimizedMealResult {
+  return optimizeFoodNames(mealName, target, foodNames, "meal");
+}
+
+export function optimizeMealPrepFromFoodNames(mealName: string, target: MealTarget, foodNames: string[]): OptimizedMealResult {
+  return optimizeFoodNames(mealName, target, foodNames, "prep");
+}
+
+function optimizeFoodNames(mealName: string, target: MealTarget, foodNames: string[], mode: OptimizerMode): OptimizedMealResult {
   const foods = unique(foodNames)
     .map((name) => getFoodByName(name))
     .filter((food): food is FoodWithCategory => Boolean(food));
@@ -80,19 +89,22 @@ export function optimizeMealFromFoodNames(mealName: string, target: MealTarget, 
 
   const entries = foods.map((food) => ({
     food,
-    ...boundsForFood(food),
-    grams: initialGramsForFood(food, foods, target)
+    ...boundsForFood(food, mode),
+    grams: initialGramsForFood(food, foods, target, mode)
   }));
 
-  const optimized = coordinateOptimize(entries, target);
+  const optimized = mode === "prep" ? coordinateOptimizeFromMultipleStarts(entries, target, mode) : coordinateOptimize(entries, target, mode);
   const meal = makeOptimizedMeal(mealName, optimized);
   const hasProtein = optimized.some((entry) => entry.food.protein * (entry.grams / 100) >= 8);
   const hasPrimaryCarb = optimized.some((entry) => getOptimizerFoodRole(entry.food) === "primaryCarb");
+  const hasFat = optimized.some((entry) => getOptimizerFoodRole(entry.food) === "fat");
   const calorieDelta = meal.calories - target.calories;
   const proteinDelta = meal.proteinG - target.proteinG;
   const carbsDelta = meal.carbsG - target.carbsG;
   const fatDelta = meal.fatG - target.fatG;
-  const status = !hasProtein
+  const status = mode === "prep"
+    ? getPrepStatus({ hasProtein, hasPrimaryCarb, hasFat, calorieDelta, proteinDelta, carbsDelta, fatDelta })
+    : !hasProtein
     ? "needs-protein"
     : !hasPrimaryCarb && (meal.carbsG <= 1 || (target.carbsG >= 5 && (carbsDelta <= -3 || meal.carbsG < target.carbsG * 0.9)))
       ? "needs-carb"
@@ -117,12 +129,12 @@ export function sumDietMeals(meals: DietMeal[]): MacroResult {
   );
 }
 
-function coordinateOptimize(entries: OptimizerEntry[], target: MealTarget): OptimizerEntry[] {
+function coordinateOptimize(entries: OptimizerEntry[], target: MealTarget, mode: OptimizerMode): OptimizerEntry[] {
   let current = entries.map((entry) => ({ ...entry, grams: clamp(roundToFive(entry.grams), entry.min, entry.max) }));
-  let bestScore = scoreEntries(current, target);
+  let bestScore = scoreEntries(current, target, mode);
 
   for (const step of [80, 40, 20, 10, 5]) {
-    for (let round = 0; round < 40; round += 1) {
+    for (let round = 0; round < (mode === "prep" ? 70 : 40); round += 1) {
       let improved = false;
 
       current = current.map((entry, index) => {
@@ -134,7 +146,7 @@ function coordinateOptimize(entries: OptimizerEntry[], target: MealTarget): Opti
             grams: clamp(roundToFive(entry.grams + direction * step), entry.min, entry.max)
           };
           const next = current.map((item, itemIndex) => (itemIndex === index ? candidate : item));
-          const nextScore = scoreEntries(next, target);
+          const nextScore = scoreEntries(next, target, mode);
 
           if (nextScore < bestScore) {
             bestScore = nextScore;
@@ -153,12 +165,26 @@ function coordinateOptimize(entries: OptimizerEntry[], target: MealTarget): Opti
   return current;
 }
 
-function scoreEntries(entries: OptimizerEntry[], target: MealTarget): number {
+function coordinateOptimizeFromMultipleStarts(entries: OptimizerEntry[], target: MealTarget, mode: OptimizerMode): OptimizerEntry[] {
+  const starts = [
+    entries,
+    entries.map((entry) => ({ ...entry, grams: entry.min })),
+    entries.map((entry) => ({ ...entry, grams: entry.max })),
+    entries.map((entry) => ({ ...entry, grams: clamp(initialGramsForCategory(entry.food.category), entry.min, entry.max) }))
+  ];
+  const optimized = starts.map((start) => coordinateOptimize(start, target, mode));
+
+  return optimized.reduce((best, candidate) => (
+    scoreEntries(candidate, target, mode) < scoreEntries(best, target, mode) ? candidate : best
+  ));
+}
+
+function scoreEntries(entries: OptimizerEntry[], target: MealTarget, mode: OptimizerMode): number {
   const macro = calculateEntries(entries);
-  const calorieError = normalize(macro.calories - target.calories, 18);
-  const proteinError = normalize(macro.proteinG - target.proteinG, 4);
-  const carbsError = normalize(macro.carbsG - target.carbsG, 4);
-  const fatError = normalize(macro.fatG - target.fatG, 2.5);
+  const calorieError = normalize(macro.calories - target.calories, mode === "prep" ? 14 : 18);
+  const proteinError = normalize(macro.proteinG - target.proteinG, mode === "prep" ? 5 : 4);
+  const carbsError = normalize(macro.carbsG - target.carbsG, mode === "prep" ? 5 : 4);
+  const fatError = normalize(macro.fatG - target.fatG, mode === "prep" ? 3 : 2.5);
   const gramPenalty = entries.reduce((sum, entry) => sum + Math.pow((entry.grams - initialGramsForCategory(entry.food.category)) / 200, 2), 0);
   const supportCarbPenalty = entries.reduce((sum, entry) => {
     if (getOptimizerFoodRole(entry.food) !== "supportCarb") return sum;
@@ -169,7 +195,7 @@ function scoreEntries(entries: OptimizerEntry[], target: MealTarget): number {
   return 4 * calorieError ** 2 + 3 * proteinError ** 2 + 2.5 * carbsError ** 2 + 2.5 * fatError ** 2 + 0.02 * gramPenalty + supportCarbPenalty;
 }
 
-function initialGramsForFood(food: FoodWithCategory, allFoods: FoodWithCategory[], target: MealTarget): number {
+function initialGramsForFood(food: FoodWithCategory, allFoods: FoodWithCategory[], target: MealTarget, mode: OptimizerMode): number {
   if (food.name === "Whey protein") return 30;
 
   const role = getMealFoodRole(food);
@@ -177,7 +203,10 @@ function initialGramsForFood(food: FoodWithCategory, allFoods: FoodWithCategory[
 
   if (role === "protein") return gramsFor(food.protein, target.proteinG / sameRoleCount, 50, 320);
   if (role === "carb") return gramsFor(food.carbs, target.carbsG / sameRoleCount, 5, 420);
-  if (role === "fat") return gramsFor(food.fat, target.fatG / sameRoleCount, food.name === "Olive oil" ? 3 : 5, food.name === "Olive oil" ? 25 : 55);
+  if (role === "fat") {
+    const bounds = boundsForFood(food, mode);
+    return gramsFor(food.fat, target.fatG / sameRoleCount, bounds.min, bounds.max);
+  }
   return 120;
 }
 
@@ -190,15 +219,43 @@ function initialGramsForCategory(category: FoodCategory): number {
   return 200;
 }
 
-function boundsForFood(food: FoodWithCategory): { min: number; max: number } {
+function boundsForFood(food: FoodWithCategory, mode: OptimizerMode = "meal"): { min: number; max: number } {
   if (food.name === "Whey protein") return { min: 30, max: 30 };
   if (food.category === "proteins") return { min: 40, max: 360 };
   if (food.category === "carbs") return { min: 5, max: 420 };
   if (food.category === "vegetables") return { min: 50, max: 300 };
   if (food.category === "fruits") return { min: 5, max: supportCarbMaxGrams[food.name] ?? 180 };
   if (food.category === "dairy") return { min: 60, max: 360 };
+  if (mode === "prep" && food.name === "Olive oil") return { min: 3, max: 45 };
+  if (mode === "prep" && food.name === "Avocado") return { min: 30, max: 180 };
+  if (mode === "prep" && food.category === "fats") return { min: 5, max: 80 };
   if (food.name === "Olive oil") return { min: 3, max: 25 };
   return { min: 3, max: 55 };
+}
+
+function getPrepStatus({
+  hasProtein,
+  hasPrimaryCarb,
+  hasFat,
+  calorieDelta,
+  proteinDelta,
+  carbsDelta,
+  fatDelta
+}: {
+  hasProtein: boolean;
+  hasPrimaryCarb: boolean;
+  hasFat: boolean;
+  calorieDelta: number;
+  proteinDelta: number;
+  carbsDelta: number;
+  fatDelta: number;
+}): OptimizedMealResult["status"] {
+  if (!hasProtein) return "needs-protein";
+  if (!hasPrimaryCarb) return "needs-carb";
+  if (!hasFat) return "needs-fat";
+  if (Math.abs(calorieDelta) <= 35 && Math.abs(proteinDelta) <= 8 && Math.abs(carbsDelta) <= 10 && Math.abs(fatDelta) <= 6) return "balanced";
+  if (Math.abs(calorieDelta) > 120 || Math.abs(proteinDelta) > 25 || Math.abs(carbsDelta) > 30 || Math.abs(fatDelta) > 18) return "off-target";
+  return "adjusted";
 }
 
 function getOptimizerFoodRole(food: FoodWithCategory): OptimizerFoodRole {

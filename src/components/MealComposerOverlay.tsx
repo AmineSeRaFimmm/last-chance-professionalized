@@ -3,7 +3,8 @@ import type { DietMeal, FoodCategory, FoodWithCategory } from "../core/dietPlan"
 import {
   getMealFoodOptions,
   getMealFoodRole,
-  optimizeMealFromFoodNames
+  optimizeMealFromFoodNames,
+  optimizeMealPrepFromFoodNames
 } from "../core/mealOptimizer";
 
 type Language = "en" | "zh";
@@ -33,6 +34,7 @@ interface MealComposerOverlayProps {
   dayLabel: string;
   meal: DietMeal;
   baseMeal: DietMeal;
+  mode?: "meal" | "prep";
   onApply: (foodNames: string[]) => void;
   onClose: () => void;
 }
@@ -51,7 +53,9 @@ const copy = {
     balanced: "Balanced",
     adjusted: "Adjusted",
     needsProtein: "Add lean protein",
-    needsCarb: "Add primary carb"
+    needsCarb: "Add primary carb",
+    needsFat: "Add fat source",
+    offTarget: "Too far from target"
   },
   zh: {
     selected: "Meal ingredients",
@@ -66,7 +70,9 @@ const copy = {
     balanced: "已平衡",
     adjusted: "已调整",
     needsProtein: "添加优质蛋白",
-    needsCarb: "添加主碳水"
+    needsCarb: "添加主碳水",
+    needsFat: "添加脂肪来源",
+    offTarget: "偏离目标过大"
   }
 } as const;
 
@@ -134,6 +140,7 @@ export function MealComposerOverlay({
   dayLabel,
   meal,
   baseMeal,
+  mode = "meal",
   onApply,
   onClose
 }: MealComposerOverlayProps) {
@@ -147,8 +154,10 @@ export function MealComposerOverlay({
   const [selectedFoodNames, setSelectedFoodNames] = useState(() => meal.items.map((item) => item.name));
   const [foodPage, setFoodPage] = useState(0);
   const preview = useMemo(
-    () => optimizeMealFromFoodNames(meal.name, baseMeal, selectedFoodNames),
-    [baseMeal, meal.name, selectedFoodNames]
+    () => mode === "prep"
+      ? optimizeMealPrepFromFoodNames(meal.name, baseMeal, selectedFoodNames)
+      : optimizeMealFromFoodNames(meal.name, baseMeal, selectedFoodNames),
+    [baseMeal, meal.name, mode, selectedFoodNames]
   );
   const options = useMemo(
     () => prioritizeFoods(getMealFoodOptions().filter((food) => !selectedFoodNames.includes(food.name)), meal),
@@ -159,7 +168,7 @@ export function MealComposerOverlay({
   const selectedFoods = selectedFoodNames
     .map((name) => getMealFoodOptions().find((food) => food.name === name))
     .filter((food): food is FoodWithCategory => Boolean(food));
-  const applyDisabled = preview.status === "empty" || preview.status === "needs-protein" || preview.status === "needs-carb";
+  const applyDisabled = preview.status === "empty" || preview.status === "needs-protein" || preview.status === "needs-carb" || preview.status === "needs-fat" || preview.status === "off-target";
 
   useEffect(() => {
     activeDragRef.current = activeDrag;
@@ -375,6 +384,8 @@ function balanceStatusLabel(status: ReturnType<typeof optimizeMealFromFoodNames>
   if (status === "balanced") return labels.balanced;
   if (status === "needs-protein") return labels.needsProtein;
   if (status === "needs-carb") return labels.needsCarb;
+  if (status === "needs-fat") return labels.needsFat;
+  if (status === "off-target") return labels.offTarget;
   return labels.adjusted;
 }
 

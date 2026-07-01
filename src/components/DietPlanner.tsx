@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { buildDietWeek } from "../core/dietPlan";
 import type { DietDay, DietMeal, FoodWithCategory } from "../core/dietPlan";
-import { getMealFoodOptions, getMealFoodRole, optimizeMealFromFoodNames, sumDietMeals } from "../core/mealOptimizer";
+import { getMealFoodOptions, getMealFoodRole, optimizeMealFromFoodNames, optimizeMealPrepFromFoodNames, sumDietMeals } from "../core/mealOptimizer";
 import { loadInput } from "../storage/localPlan";
 import { findDietPrepOverride, findMealOverride, loadDietOverrides, loadDietPrepOverrides, saveDietPrepOverride, saveMealOverride } from "../storage/dietOverrides";
 import type { DietMealOverride, DietPrepOverride } from "../storage/dietOverrides";
@@ -269,6 +269,7 @@ export function DietPlanner() {
           dayLabel={composer.dayLabel}
           language={language}
           meal={composer.meal}
+          mode={composer.mode === "prep" ? "prep" : "meal"}
           onApply={handleApply}
           onClose={() => setComposer(null)}
         />
@@ -365,7 +366,7 @@ function DietDayCard({
   onMealOpen: (baseMeal: DietMeal, meal: DietMeal, mode?: DietTemplate) => void;
 }) {
   const mealPrep = day.meals[0] ?? buildMealPrepMeal(day, labels.mealPrepTitle);
-  const baseMealPrep = buildMealPrepMeal(baseDay, labels.mealPrepTitle);
+  const baseMealPrep = buildPrepTargetMeal(baseDay, labels.mealPrepTitle);
 
   return (
     <section className="card diet-day-card">
@@ -549,22 +550,35 @@ function buildMealPrepMeal(day: DietDay, name: string): DietMeal {
       return food ? { food, grams } : null;
     })
     .filter((candidate): candidate is { food: FoodWithCategory; grams: number } => Boolean(candidate));
-  const prepFoodNames = selectMealPrepFoodNames(candidates);
+  const prepFoodNames = selectMealPrepFoodNames(candidates, day.target);
 
-  return optimizeMealFromFoodNames(name, day.target, prepFoodNames).meal;
+  return optimizeMealPrepFromFoodNames(name, day.target, prepFoodNames).meal;
 }
 
-function selectMealPrepFoodNames(candidates: Array<{ food: FoodWithCategory; grams: number }>): string[] {
+function selectMealPrepFoodNames(candidates: Array<{ food: FoodWithCategory; grams: number }>, target: DietDay["target"]): string[] {
   const selected: string[] = [];
+  const allFoods = getMealFoodOptions().map((food) => ({ food, grams: 100 }));
+  const isLowerCarbDay = target.carbsG <= 45;
 
   addBestCandidate(selected, candidates, (food) => food.category === "proteins", (food, grams) => food.protein * grams);
+  if (isLowerCarbDay && target.proteinG >= 115) {
+    addBestCandidate(
+      selected,
+      allFoods,
+      (food) => food.category === "proteins",
+      (food) => (food.name === "Shrimp" ? 1000 : food.name === "Chicken breast" ? 500 : 0) + food.protein * 8 - food.fat * 4 - food.kcal / 100
+    );
+  }
   addBestCandidate(selected, candidates, (food) => food.category === "carbs", (food, grams) => food.carbs * grams);
   addBestCandidate(selected, candidates, (food) => food.category === "vegetables", (_food, grams) => grams);
-  addBestCandidate(selected, candidates, (food) => food.category === "dairy", (food, grams) => food.protein * grams);
-  addBestCandidate(selected, candidates, (food, grams) => food.category === "fruits" && grams >= 40, (food, grams) => food.carbs * grams);
-
-  if (selected.length < 4) {
-    addBestCandidate(selected, candidates, (food) => food.category === "fats", (food, grams) => food.fat * grams);
+  addBestCandidate(
+    selected,
+    isLowerCarbDay ? allFoods : candidates,
+    (food) => food.category === "fats",
+    (food, grams) => (food.name === "Olive oil" ? 10000 : 0) + food.fat * grams - food.carbs * 50
+  );
+  if (!isLowerCarbDay && selected.length < 5) {
+    addBestCandidate(selected, candidates, (food) => food.category === "dairy", (food, grams) => food.protein * grams);
   }
 
   return selected.length > 0 ? selected : candidates.slice(0, 5).map((candidate) => candidate.food.name);
@@ -587,7 +601,7 @@ function buildPrepWeek(baseWeek: DietDay[], overrides: DietPrepOverride[], mealN
   return baseWeek.map((day) => {
     const basePrepMeal = buildMealPrepMeal(day, mealName);
     const override = findDietPrepOverride(overrides, day.day);
-    const prepMeal = override ? optimizeMealFromFoodNames(mealName, day.target, override.foodNames).meal : basePrepMeal;
+    const prepMeal = override ? optimizeMealPrepFromFoodNames(mealName, day.target, override.foodNames).meal : basePrepMeal;
 
     return {
       ...day,
@@ -595,6 +609,17 @@ function buildPrepWeek(baseWeek: DietDay[], overrides: DietPrepOverride[], mealN
       totals: sumDietMeals([prepMeal])
     };
   });
+}
+
+function buildPrepTargetMeal(day: DietDay, name: string): DietMeal {
+  return {
+    name,
+    items: [],
+    calories: day.target.calories,
+    proteinG: day.target.proteinG,
+    carbsG: day.target.carbsG,
+    fatG: day.target.fatG
+  };
 }
 
 function applyOverridesToWeek(baseWeek: DietDay[], overrides: DietMealOverride[]): DietDay[] {

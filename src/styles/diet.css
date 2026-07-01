@@ -551,7 +551,9 @@
 }
 
 .meal-balance-status.needs-protein,
-.meal-balance-status.needs-carb {
+.meal-balance-status.needs-carb,
+.meal-balance-status.needs-fat,
+.meal-balance-status.off-target {
   background: rgba(245, 158, 11, 0.14);
   color: #92400e;
   box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.18);
