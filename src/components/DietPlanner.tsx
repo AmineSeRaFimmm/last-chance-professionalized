@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { buildDietWeek } from "../core/dietPlan";
-import type { DietDay, DietMeal } from "../core/dietPlan";
+import type { DietDay, DietMeal, FoodWithCategory } from "../core/dietPlan";
 import { getMealFoodOptions, getMealFoodRole, optimizeMealFromFoodNames, sumDietMeals } from "../core/mealOptimizer";
 import { loadInput } from "../storage/localPlan";
 import { findDietPrepOverride, findMealOverride, loadDietOverrides, loadDietPrepOverrides, saveDietPrepOverride, saveMealOverride } from "../storage/dietOverrides";
@@ -542,19 +542,45 @@ function buildMealPrepMeal(day: DietDay, name: string): DietMeal {
     }
   }
 
-  return {
-    name,
-    items: [...itemGrams.entries()]
-      .map(([itemName, grams]) => ({ name: itemName, grams }))
-      .sort((a, b) => {
-        const roleOrder = roleSortValue(getFoodRoleClass(a.name)) - roleSortValue(getFoodRoleClass(b.name));
-        return roleOrder || b.grams - a.grams || a.name.localeCompare(b.name);
-      }),
-    calories: day.totals.calories,
-    proteinG: day.totals.proteinG,
-    carbsG: day.totals.carbsG,
-    fatG: day.totals.fatG
-  };
+  const foodByName = new Map(getMealFoodOptions().map((food) => [food.name, food]));
+  const candidates = [...itemGrams.entries()]
+    .map(([itemName, grams]) => {
+      const food = foodByName.get(itemName);
+      return food ? { food, grams } : null;
+    })
+    .filter((candidate): candidate is { food: FoodWithCategory; grams: number } => Boolean(candidate));
+  const prepFoodNames = selectMealPrepFoodNames(candidates);
+
+  return optimizeMealFromFoodNames(name, day.target, prepFoodNames).meal;
+}
+
+function selectMealPrepFoodNames(candidates: Array<{ food: FoodWithCategory; grams: number }>): string[] {
+  const selected: string[] = [];
+
+  addBestCandidate(selected, candidates, (food) => food.category === "proteins", (food, grams) => food.protein * grams);
+  addBestCandidate(selected, candidates, (food) => food.category === "carbs", (food, grams) => food.carbs * grams);
+  addBestCandidate(selected, candidates, (food) => food.category === "vegetables", (_food, grams) => grams);
+  addBestCandidate(selected, candidates, (food) => food.category === "dairy", (food, grams) => food.protein * grams);
+  addBestCandidate(selected, candidates, (food, grams) => food.category === "fruits" && grams >= 40, (food, grams) => food.carbs * grams);
+
+  if (selected.length < 4) {
+    addBestCandidate(selected, candidates, (food) => food.category === "fats", (food, grams) => food.fat * grams);
+  }
+
+  return selected.length > 0 ? selected : candidates.slice(0, 5).map((candidate) => candidate.food.name);
+}
+
+function addBestCandidate(
+  selected: string[],
+  candidates: Array<{ food: FoodWithCategory; grams: number }>,
+  predicate: (food: FoodWithCategory, grams: number) => boolean,
+  score: (food: FoodWithCategory, grams: number) => number
+) {
+  const candidate = candidates
+    .filter((item) => predicate(item.food, item.grams) && !selected.includes(item.food.name))
+    .sort((a, b) => score(b.food, b.grams) - score(a.food, a.grams) || a.food.name.localeCompare(b.food.name))[0];
+
+  if (candidate && selected.length < 5) selected.push(candidate.food.name);
 }
 
 function buildPrepWeek(baseWeek: DietDay[], overrides: DietPrepOverride[], mealName: string): DietDay[] {
@@ -569,14 +595,6 @@ function buildPrepWeek(baseWeek: DietDay[], overrides: DietPrepOverride[], mealN
       totals: sumDietMeals([prepMeal])
     };
   });
-}
-
-function roleSortValue(role: string): number {
-  if (role === "protein") return 0;
-  if (role === "carb") return 1;
-  if (role === "plant") return 2;
-  if (role === "fat") return 3;
-  return 4;
 }
 
 function applyOverridesToWeek(baseWeek: DietDay[], overrides: DietMealOverride[]): DietDay[] {
