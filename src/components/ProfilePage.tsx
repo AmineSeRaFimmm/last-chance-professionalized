@@ -14,11 +14,13 @@ const copy = {
   en: {
     eyebrow: "Personal dashboard",
     title: "Profile",
-    subtitle: "Saved plan, body data, and progress tracking in one place.",
+    subtitle: "Log weight, check your trend, and keep the plan calibrated.",
     noPlan: "No saved plan yet",
     noPlanText: "Go to Plan, complete your data, then tap Save plan locally.",
     personal: "Personal data",
     savedPlan: "Saved plan",
+    bodySummary: "Body summary",
+    planDetails: "Plan details",
     sex: "Sex",
     age: "Age",
     height: "Height",
@@ -30,16 +32,19 @@ const copy = {
     planType: "Plan type",
     calories: "Planned calories",
     weeklyLoss: "Expected weekly loss",
-    protein: "Protein factor"
+    protein: "Protein factor",
+    currentPlan: "Current plan"
   },
   zh: {
     eyebrow: "个人主页",
     title: "Profile",
-    subtitle: "个人信息、保存计划和进度跟踪集中在一个页面。",
+    subtitle: "记录体重、查看趋势，并让计划持续校准。",
     noPlan: "还没有保存计划",
     noPlanText: "先进入 Plan，填完数据后点击保存到本机。",
     personal: "个人信息",
     savedPlan: "保存的计划",
+    bodySummary: "身体摘要",
+    planDetails: "计划细节",
     sex: "性别",
     age: "年龄",
     height: "身高",
@@ -51,7 +56,8 @@ const copy = {
     planType: "计划类型",
     calories: "计划热量",
     weeklyLoss: "预计周下降",
-    protein: "蛋白系数"
+    protein: "蛋白系数",
+    currentPlan: "当前计划"
   }
 } as const;
 
@@ -97,46 +103,50 @@ export function ProfilePage() {
         </section>
       )}
 
-      {source.savedInput && (
-        <>
-          <section className="card profile-summary-card">
-            <div className="card-title">{t.personal}</div>
-            <div className="profile-metric-grid">
-              <ProfileMetric label={t.sex} value={source.savedInput.sex} />
-              <ProfileMetric label={t.age} value={String(source.savedInput.age)} />
-              <ProfileMetric label={t.height} value={`${source.savedInput.heightCm} cm`} />
-              <ProfileMetric label={t.weight} value={`${source.savedInput.weightKg} kg`} />
-              <ProfileMetric label={t.target} value={source.savedInput.targetWeightKg ? `${source.savedInput.targetWeightKg} kg` : "—"} />
-              <ProfileMetric label={t.timeline} value={source.savedInput.expectedTimelineWeeks ? `${source.savedInput.expectedTimelineWeeks} weeks` : "—"} />
-            </div>
-          </section>
-
-          <section className="card profile-summary-card">
-            <div className="card-title">{t.savedPlan}</div>
-            <div className="profile-metric-grid">
-              <ProfileMetric label={t.planType} value={source.savedInput.planType} />
-              <ProfileMetric label={t.activity} value={String(source.savedInput.activityFactor)} />
-              <ProfileMetric label={t.trainingDays} value={`${source.savedInput.trainingDaysPerWeek}/week`} />
-              <ProfileMetric label={t.protein} value={`${source.savedInput.proteinFactor} g/kg`} />
-              <ProfileMetric label={t.calories} value={`${source.plannedDailyCalories} kcal/day`} />
-              <ProfileMetric label={t.weeklyLoss} value={`${source.expectedWeeklyLossKg} kg/week`} />
-            </div>
-          </section>
-        </>
-      )}
-
       <ProgressTracker
         language={language}
         plannedDailyCalories={source.plannedDailyCalories}
         expectedWeeklyLossKg={source.expectedWeeklyLossKg}
         defaultWeightKg={source.defaultWeightKg}
       />
+
+      {source.savedInput && (
+        <section className="card profile-summary-card profile-body-card">
+          <div className="profile-section-head">
+            <div>
+              <div className="card-title">{t.bodySummary}</div>
+              <p className="small-note no-margin">{t.currentPlan}</p>
+            </div>
+          </div>
+          <div className="profile-metric-grid profile-priority-grid">
+            <ProfileMetric label={t.weight} value={`${source.savedInput.weightKg} kg`} />
+            <ProfileMetric label={t.target} value={source.savedInput.targetWeightKg ? `${source.savedInput.targetWeightKg} kg` : "—"} />
+            <ProfileMetric label={t.timeline} value={source.savedInput.expectedTimelineWeeks ? `${source.savedInput.expectedTimelineWeeks} weeks` : "—"} />
+          </div>
+          <details className="profile-details">
+            <summary>{t.planDetails}</summary>
+            <div className="profile-detail-list">
+              <ProfileDetail label={t.sex} value={source.savedInput.sex} />
+              <ProfileDetail label={t.age} value={String(source.savedInput.age)} />
+              <ProfileDetail label={t.height} value={`${source.savedInput.heightCm} cm`} />
+              <ProfileDetail label={t.planType} value={source.savedInput.planType} />
+              <ProfileDetail label={t.activity} value={String(source.savedInput.activityFactor)} />
+              <ProfileDetail label={t.trainingDays} value={`${source.savedInput.trainingDaysPerWeek}/week`} />
+              <ProfileDetail label={t.protein} value={`${source.savedInput.proteinFactor} g/kg`} />
+            </div>
+          </details>
+        </section>
+      )}
     </main>
   );
 }
 
 function ProfileMetric({ label, value }: { label: string; value: string }) {
   return <div className="profile-metric"><span>{label}</span><strong>{value}</strong></div>;
+}
+
+function ProfileDetail({ label, value }: { label: string; value: string }) {
+  return <div className="profile-detail"><span>{label}</span><strong>{value}</strong></div>;
 }
 
 function buildProfileSource() {

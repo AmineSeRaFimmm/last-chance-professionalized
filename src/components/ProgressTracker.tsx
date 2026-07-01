@@ -41,7 +41,10 @@ const copy = {
     fast: "Loss is faster than target. If strength, sleep, or mood drop, add calories back to training days.",
     gain: "Weight is trending up. Check weekend calories, oils, sauces, snacks, alcohol, and high-carb day execution.",
     recentEntries: "Recent entries",
-    exportLog: "Export log CSV"
+    exportLog: "Export log CSV",
+    targetCalories: "Target calories",
+    expectedLoss: "Expected loss",
+    currentWeight: "Current weight"
   },
   zh: {
     title: "进度跟踪",
@@ -62,7 +65,10 @@ const copy = {
     fast: "下降快于目标。如果力量、睡眠或情绪下降，应把热量加回训练日。",
     gain: "体重趋势上升。检查周末热量、油、酱料、零食、酒精和高碳日执行。",
     recentEntries: "最近记录",
-    exportLog: "导出记录 CSV"
+    exportLog: "导出记录 CSV",
+    targetCalories: "目标热量",
+    expectedLoss: "预计下降",
+    currentWeight: "当前体重"
   }
 } as const;
 
@@ -113,9 +119,19 @@ export function ProgressTracker({
   }
 
   return (
-    <section className="card">
-      <div className="card-title">{t.title}</div>
-      <p className="small-note">{t.note}</p>
+    <section className="card progress-card">
+      <div className="profile-section-head">
+        <div>
+          <div className="card-title">{t.title}</div>
+          <p className="small-note no-margin">{t.note}</p>
+        </div>
+      </div>
+
+      <div className="progress-plan-strip">
+        <ProgressPlanMetric label={t.targetCalories} value={`${plannedDailyCalories} kcal`} />
+        <ProgressPlanMetric label={t.expectedLoss} value={`${expectedWeeklyLossKg} kg/wk`} />
+        <ProgressPlanMetric label={t.currentWeight} value={`${defaultWeightKg.toFixed(1)} kg`} />
+      </div>
 
       <div className="input-grid compact-grid">
         <div className="field">
@@ -149,15 +165,9 @@ export function ProgressTracker({
         </div>
       </div>
 
-      <div className="button-row progress-buttons">
+      <div className="progress-actions">
         <button className="primary-button no-margin" type="button" onClick={handleAddEntry}>
           {t.add}
-        </button>
-        <button className="secondary-button" type="button" onClick={handleExport}>
-          {t.exportLog}
-        </button>
-        <button className="secondary-button danger-button" type="button" onClick={handleClear}>
-          {t.clear}
         </button>
       </div>
 
@@ -185,6 +195,15 @@ export function ProgressTracker({
         {getStatusMessage(summary.status, t)}
       </div>
 
+      <div className="progress-secondary-actions">
+        <button className="secondary-button" type="button" onClick={handleExport}>
+          {t.exportLog}
+        </button>
+        <button className="secondary-button danger-button" type="button" onClick={handleClear}>
+          {t.clear}
+        </button>
+      </div>
+
       {recentEntries.length > 0 && (
         <div className="recent-log">
           <div className="recent-log-title">{t.recentEntries}</div>
@@ -201,6 +220,15 @@ export function ProgressTracker({
         </div>
       )}
     </section>
+  );
+}
+
+function ProgressPlanMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="progress-plan-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 
