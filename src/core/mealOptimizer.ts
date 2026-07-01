@@ -13,7 +13,7 @@ export interface MealTarget {
 
 export interface OptimizedMealResult {
   meal: DietMeal;
-  status: "balanced" | "adjusted" | "needs-protein" | "empty";
+  status: "balanced" | "adjusted" | "needs-protein" | "needs-carb" | "empty";
   calorieDelta: number;
   proteinDelta: number;
   carbsDelta: number;
@@ -26,6 +26,17 @@ interface OptimizerEntry {
   min: number;
   max: number;
 }
+
+type OptimizerFoodRole = "primaryProtein" | "primaryCarb" | "supportCarb" | "fat" | "plant";
+
+const supportCarbMaxGrams: Record<string, number> = {
+  Banana: 150,
+  Apple: 200,
+  Blueberries: 150,
+  Orange: 200,
+  Strawberries: 180,
+  Kiwi: 150
+};
 
 export function getMealFoodOptions(): FoodWithCategory[] {
   return getAllFoods();
@@ -76,12 +87,18 @@ export function optimizeMealFromFoodNames(mealName: string, target: MealTarget, 
   const optimized = coordinateOptimize(entries, target);
   const meal = makeOptimizedMeal(mealName, optimized);
   const hasProtein = optimized.some((entry) => entry.food.protein * (entry.grams / 100) >= 8);
+  const hasPrimaryCarb = optimized.some((entry) => getOptimizerFoodRole(entry.food) === "primaryCarb");
+  const supportCarbsAtLimit = optimized
+    .filter((entry) => getOptimizerFoodRole(entry.food) === "supportCarb")
+    .some((entry) => entry.grams >= entry.max - 5);
   const calorieDelta = meal.calories - target.calories;
   const proteinDelta = meal.proteinG - target.proteinG;
   const carbsDelta = meal.carbsG - target.carbsG;
   const fatDelta = meal.fatG - target.fatG;
   const status = !hasProtein
     ? "needs-protein"
+    : !hasPrimaryCarb && supportCarbsAtLimit && (carbsDelta <= -8 || meal.carbsG < target.carbsG * 0.8)
+      ? "needs-carb"
     : Math.abs(calorieDelta) <= 20 && Math.abs(proteinDelta) <= 5 && Math.abs(carbsDelta) <= 6 && Math.abs(fatDelta) <= 3
       ? "balanced"
       : "adjusted";
@@ -146,8 +163,13 @@ function scoreEntries(entries: OptimizerEntry[], target: MealTarget): number {
   const carbsError = normalize(macro.carbsG - target.carbsG, 4);
   const fatError = normalize(macro.fatG - target.fatG, 2.5);
   const gramPenalty = entries.reduce((sum, entry) => sum + Math.pow((entry.grams - initialGramsForCategory(entry.food.category)) / 200, 2), 0);
+  const supportCarbPenalty = entries.reduce((sum, entry) => {
+    if (getOptimizerFoodRole(entry.food) !== "supportCarb") return sum;
+    const softMax = supportCarbMaxGrams[entry.food.name] ?? 180;
+    return sum + Math.max(0, entry.grams - softMax) ** 2 / 25;
+  }, 0);
 
-  return 4 * calorieError ** 2 + 3 * proteinError ** 2 + 2.5 * carbsError ** 2 + 2.5 * fatError ** 2 + 0.02 * gramPenalty;
+  return 4 * calorieError ** 2 + 3 * proteinError ** 2 + 2.5 * carbsError ** 2 + 2.5 * fatError ** 2 + 0.02 * gramPenalty + supportCarbPenalty;
 }
 
 function initialGramsForFood(food: FoodWithCategory, allFoods: FoodWithCategory[], target: MealTarget): number {
@@ -176,10 +198,18 @@ function boundsForFood(food: FoodWithCategory): { min: number; max: number } {
   if (food.category === "proteins") return { min: 40, max: 360 };
   if (food.category === "carbs") return { min: 5, max: 420 };
   if (food.category === "vegetables") return { min: 50, max: 300 };
-  if (food.category === "fruits") return { min: 5, max: 280 };
+  if (food.category === "fruits") return { min: 5, max: supportCarbMaxGrams[food.name] ?? 180 };
   if (food.category === "dairy") return { min: 60, max: 360 };
   if (food.name === "Olive oil") return { min: 3, max: 25 };
   return { min: 3, max: 55 };
+}
+
+function getOptimizerFoodRole(food: FoodWithCategory): OptimizerFoodRole {
+  if (food.category === "fruits") return "supportCarb";
+  if (food.category === "carbs") return "primaryCarb";
+  if (food.category === "proteins" || food.category === "dairy") return "primaryProtein";
+  if (food.category === "fats") return "fat";
+  return "plant";
 }
 
 function makeOptimizedMeal(name: string, entries: OptimizerEntry[]): DietMeal {

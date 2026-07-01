@@ -47,7 +47,11 @@ const copy = {
     protein: "Protein",
     carbs: "Carbs",
     fats: "Fats",
-    plants: "Plants"
+    plants: "Plants",
+    balanced: "Balanced",
+    adjusted: "Adjusted",
+    needsProtein: "Add lean protein",
+    needsCarb: "Add primary carb"
   },
   zh: {
     selected: "Meal ingredients",
@@ -58,7 +62,11 @@ const copy = {
     protein: "Protein",
     carbs: "Carbs",
     fats: "Fats",
-    plants: "Plants"
+    plants: "Plants",
+    balanced: "已平衡",
+    adjusted: "已调整",
+    needsProtein: "添加优质蛋白",
+    needsCarb: "添加主碳水"
   }
 } as const;
 
@@ -309,6 +317,7 @@ export function MealComposerOverlay({
         <div className="meal-selected-zone" ref={selectedZoneRef}>
           <div className="meal-selected-head">
             <span>{t.selected}</span>
+            <strong className={`meal-balance-status ${preview.status}`}>{balanceStatusLabel(preview.status, t)}</strong>
           </div>
           <div className="meal-selected-list">
             {selectedFoods.map((food) => (
@@ -360,6 +369,13 @@ function categoryLabel(category: FoodCategory, labels: typeof copy.en | typeof c
   if (category === "carbs" || category === "fruits") return labels.carbs;
   if (category === "fats") return labels.fats;
   return labels.plants;
+}
+
+function balanceStatusLabel(status: ReturnType<typeof optimizeMealFromFoodNames>["status"], labels: typeof copy.en | typeof copy.zh): string {
+  if (status === "balanced") return labels.balanced;
+  if (status === "needs-protein") return labels.needsProtein;
+  if (status === "needs-carb") return labels.needsCarb;
+  return labels.adjusted;
 }
 
 function getExternalCardPosition(clientX: number, clientY: number, container: HTMLElement | null): CardPosition {
